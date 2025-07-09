@@ -17,24 +17,27 @@
         <v-card class="pa-6 form-card" elevation="5">
           <v-form ref="form" v-model="valid" @submit.prevent="submitForm">
             <v-text-field
-              v-model="form.name"
+              v-model="formData.name"
               label="Ваше имя"
               :rules="[rules.required]"
             />
             <v-text-field
-              v-model="form.email"
+              v-model="formData.email"
               label="Email"
               :rules="[rules.required, rules.email]"
             />
             <v-textarea
-              v-model="form.message"
+              v-model="formData.message"
               label="Сообщение"
               :rules="[rules.required]"
             />
             <v-btn
-              :disabled="!valid"
               type="submit"
               color="primary"
+              class="mt-4 rounded-pill text-white"
+              :disabled="!valid"
+              block
+              size="large"
             >
               Отправить
             </v-btn>
@@ -65,28 +68,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+  import { ref } from 'vue'
 
-const form = ref({
-  name: '',
-  email: '',
-  message: '',
-})
 
-const rules = {
-  required: v => !!v || 'Обязательное поле',
-  email: v => /^\S+@\S+\.\S+$/.test(v) || 'Некорректный email',
-}
+  const form = ref(null)
+  const valid = ref(false)
 
-const submitForm = () => {
-  if (form.value.name && form.value.email && form.value.message) {
-    alert('Спасибо за сообщение! Мы свяжемся с вами в ближайшее время.')
-    console.log('Форма отправлена:', form.value)
-    form.value = { name: '', email: '', message: '' }
-  } else {
-    alert('Пожалуйста, заполните все поля.')
+  const formData = ref({
+    name: '',
+    email: '',
+    message: '',
+  })
+  const rules = {
+    required: v => !!v || 'Обязательное поле',
+    email: v => /^\S+@\S+\.\S+$/.test(v) || 'Некорректный email',
   }
-}
+
+  const submitForm = () => {
+    if (!form.value.validate()) {
+      alert('Пожалуйста, заполните все поля.')
+      return
+    }
+
+    alert('Спасибо за сообщение! Мы свяжемся с вами в ближайшее время.')
+    console.log('Форма отправлена:', formData.value)
+
+    formData.value = { name: '', email: '', message: '' }
+    form.value.resetValidation()
+  }
+
 </script>
 
 <style scoped>

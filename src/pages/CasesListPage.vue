@@ -1,12 +1,12 @@
 <template>
   <v-container fluid class="py-10">
     <v-row>
-      <!-- Filters Left -->
+      <!-- Фильтры слева -->
       <v-col cols="12" md="3">
         <CaseFilters :categories="categoryList" @select="filterCategory" />
       </v-col>
 
-      <!-- Cases Right -->
+      <!-- Кейсы справа -->
       <v-col cols="12" md="9">
         <v-row>
           <v-col

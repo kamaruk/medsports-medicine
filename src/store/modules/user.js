@@ -1,4 +1,4 @@
-import defaultAvatar from '@/assets/images/default-avatar.png'
+
 
 const savedUser = JSON.parse(localStorage.getItem('userData'))
 const savedAuth = localStorage.getItem('isAuthenticated') === 'true'
@@ -13,7 +13,11 @@ export default {
       email: '',
       role: 'student',
       avatar: null,
-      completedCases: []
+      completedCases: [],
+      achievements: []
+    },
+    getters: {
+      completedCases: state => state.userData.completedCases || []
     }
   }),
 
@@ -61,16 +65,16 @@ export default {
     }
   },
 
-  actions: {
-    login({ commit }) {
-      const demoUser = {
-        name: 'Demo Doctor',
-        email: 'demo@example.com',
-        role: 'student',
-        avatar: defaultAvatar,
-        completedCases: []
+ actions: {
+    login({ commit }, { email, password }) {
+      
+      const demo = { email: 'demo@example.com', password: '123456', name: 'Demo Doctor' }
+      if (email === demo.email && password === demo.password) {
+        commit('setUser', { ...demo, password: undefined })
+      } else {
+        commit('setAuthError', 'Неверный email или пароль')
       }
-      commit('setUser', demoUser)
     }
-  }
+  },
 }
+

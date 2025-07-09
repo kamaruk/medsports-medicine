@@ -91,13 +91,13 @@
               v-for="answer in userAnswers"
               :key="answer.stepId"
             >
-              <v-list-item-content>
+              
                 <v-list-item-title>{{ answer.question }}</v-list-item-title>
                 <v-list-item-subtitle>
                   Вы выбрали: {{ answer.selectedOption }} — 
                   <strong>{{ answer.isCorrect ? '✅ Верно' : '❌ Неверно' }}</strong>
                 </v-list-item-subtitle>
-              </v-list-item-content>
+              
             </v-list-item>
           </v-list>
         </div>
@@ -216,6 +216,7 @@
         status: isSuccess ? 'success' : 'failed',
         answers: userAnswers.value
       })
+      store.dispatch('achievements/checkAchievements')
     }
   })
 </script>

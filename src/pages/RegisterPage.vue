@@ -10,32 +10,34 @@
             <p class="text-subtitle-2 text-grey-darken-1">Регистрация за минуту!</p>
           </v-card-title>
 
-          <v-form ref="form" v-model="valid" @submit.prevent="onRegister">
+          <v-form ref="registerForm" v-model="valid" @submit.prevent="onRegister">
             <v-text-field
               v-model="name"
               label="Имя"
-              :rules="[rules.required]"
+              :rules="[required]"
               required
             />
             <v-text-field
               v-model="email"
               label="Email"
-              :rules="[rules.required, rules.email]"
+              :rules="[required, ...emailRules]"
               required
             />
             <v-text-field
               v-model="password"
               label="Пароль"
               type="password"
-              :rules="[rules.required, rules.minLength]"
+              :rules="[required, ...passwordRules]"
               required
             />
-            <v-text-field
+           <v-text-field
               v-model="passwordConfirm"
               label="Повторите пароль"
+              prepend-inner-icon="mdi-lock-check"
+              :rules="[required, ...passwordConfirmRules]"
               type="password"
-              :rules="[rules.passwordMatch]"
               required
+              
             />
 
             <v-radio-group
@@ -85,16 +87,26 @@
   const store = useStore()
   const router = useRouter()
 
-  
- const rules = {
-    required: v => !!v || 'Обязательное поле',
-    email: v => /^\S+@\S+\.\S+$/.test(v) || 'Некорректный email',
-    minLength: v => v.length >= 6 || 'Мин. 6 символов',
-    passwordMatch: v => v === password.value || 'Пароли не совпадают',
-  }
+  const required = v => !!v || 'Обязательное поле'
 
-  const onRegister = () => {
-    if (!valid.value) return
+  const emailRules = [
+    v => !!v || 'Введите email',
+    v => /^\S+@\S+\.\S+$/.test(v) || 'Некорректный email'
+  ]
+
+  const passwordRules = [
+    v => !!v || 'Введите пароль',
+    v => v.length >= 6 || 'Минимум 6 символов'
+  ]
+
+  const passwordConfirmRules = [
+    v => !!v || 'Повторите пароль',
+    v => v === password.value || 'Пароли не совпадают'
+  ]
+
+
+  function onRegister() {
+    if (!registerForm.value.validate()) return
 
     const userData = {
       name: name.value,
@@ -105,7 +117,7 @@
     }
 
     store.commit('user/setUser', userData)
-    router.push('/profile') 
+    router.push('/profile')
   }
 </script>
 

@@ -4,7 +4,7 @@
       <div class="overlay">
         <div class="text-white text-caption">{{ caseData.category }}</div>
         <div class="text-white text-caption d-flex align-center">
-          Difficulty level:
+          Уровень сложности:
           <v-icon v-for="n in 3" :key="n" size="12" class="ml-1"
             :color="n <= caseData.difficulty ? 'red' : 'white'">
             mdi-circle
@@ -18,7 +18,7 @@
     </v-card-text>
     <v-card-actions class="justify-end">
       <v-btn variant="text" class="text-primary" :to="`/cases/${caseData.id}`">
-        Enroll <v-icon end>mdi-chevron-right</v-icon>
+      Пройти <v-icon end>mdi-chevron-right</v-icon>
       </v-btn>
       <v-chip
         v-if="status"

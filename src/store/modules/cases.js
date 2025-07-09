@@ -6,9 +6,9 @@ const state = () => ({
   cases: [
     {
       id: 1,
-      title: 'Back pain',
-      category: 'Emergency medicine',
-      description: 'A real problem or a good reason to get sick leave?',
+      title: 'Боль в спине',
+      category: 'Экстренная медицина',
+      description: 'Реальная проблема или веская причина взять больничный?',
       image: med1,
       difficulty: 1,
       steps: [
@@ -60,9 +60,9 @@ const state = () => ({
 
     {
       id: 2,
-      title: 'Polydipsia in a teenager',
-      category: 'Endocrinology',
-      description: 'Excessive thirst in a 15-year-old boy: what could be wrong?',
+      title: 'Полидипсия у подростка',
+      category: 'Эндокринология',
+      description: 'Чрезмерная жажда у 15-летнего мальчика: что может быть не так?',
       image: med2,
       difficulty: 2,
       steps: [
@@ -109,9 +109,9 @@ const state = () => ({
 
     {
       id: 3,
-      title: 'Shortness of breath in elderly',
-      category: 'Cardiology',
-      description: 'What to do when your 74-year-old patient can’t breathe properly?',
+      title: 'Одышка у пожилых',
+      category: 'Кардиология',
+      description: 'Что делать, если ваш 74-летний пациент не может нормально дышать?',
       image: med3,
       difficulty: 3,
       steps: [
@@ -158,10 +158,10 @@ const state = () => ({
 
     {
       id: 4,
-      title: 'Severe abdominal pain',
-      category: 'Surgery',
-      description: 'Acute abdomen in a young adult. Emergency or not?',
-      image: 'https://source.unsplash.com/featured/?surgery,hospital',
+      title: 'Сильная боль в животе',
+      category: 'Хирургия',
+      description: 'Острый живот у молодого человека. Экстренная помощь или нет?',
+      image: '',
       difficulty: 2,
       steps: [
         {
@@ -207,10 +207,10 @@ const state = () => ({
 
     {
       id: 5,
-      title: 'Head trauma after fall',
-      category: 'Neurology',
-      description: 'Elderly patient, falls at home, develops confusion.',
-      image: 'https://source.unsplash.com/featured/?neurology',
+      title: 'Травма головы после падения',
+      category: 'Неврология',
+      description: 'Пожилой пациент, падает дома, развивается спутанность сознания',
+      image: '',
       difficulty: 2,
       steps: [
         {
@@ -245,10 +245,10 @@ const state = () => ({
 
     {
       id: 6,
-      title: 'Persistent fever in child',
-      category: 'Pediatrics',
-      description: 'Fever for 6 days, rash, red lips — what is going on?',
-      image: 'https://source.unsplash.com/featured/?pediatrics,child',
+      title: 'Постоянная лихорадка у ребенка',
+      category: 'Педиатрия',
+      description: 'Лихорадка в течение 6 дней, сыпь, красные губы — что происходит?',
+      image: '',
       difficulty: 3,
       steps: [
         {
@@ -278,6 +278,123 @@ const state = () => ({
           ],
           explanation: 'IVIG и аспирин — стандарт лечения.',
         },
+      ]
+    },
+
+    {
+      id: 7,
+      title: 'Сепсис после операции',
+      category: 'Инфекционные болезни',
+      description: 'Пациент через 3 дня после аппендэктомии поступил с лихорадкой и гипотонией.',
+      image: '',
+      difficulty: 4,
+      steps: [
+        { id: 1, type: 'question', 
+          question: 'Какие первые обследования назначите?', 
+          options: [
+            { text: 'Общий анализ крови и лактат', correct: true },
+            { text: 'ЭКГ', correct: false },
+            { text: 'КТ тазобедренных суставов', correct: false },
+          ], 
+          explanation: 'Сепсис подтверждается лейкоцитозом и повышенным лактатом.' },
+        { id: 2, 
+          type: 'info', 
+          content: 'Лейкоциты 18×10⁹/л, лактат — 4 ммоль/л.' },
+        { id: 3, 
+          type: 'question', 
+          question: 'Какой антибактериальный препарат начнёте?', 
+          options: [
+            { text: 'Цефтриаксон + метронидазол', correct: true },
+            { text: 'Амикацин', correct: false },
+            { text: 'Клиндамицин', correct: false },
+          ], 
+          explanation: 'Широкий спектр: покрыть грам- и анаэробы.' },
+        { id: 4, 
+          type: 'info', 
+          content: 'После старта антибактериальной терапии давление стабилизировалось.' },
+        { id: 5, 
+          type: 'question', 
+          question: 'Что делать с инфузионной терапией?', 
+          options: [
+            { text: 'Коллоидные растворы + кристаллоиды', correct: true },
+            { text: 'Только кристаллоиды', correct: false },
+            { text: 'Только коллоиды', correct: false },
+          ], 
+          explanation: 'Комбинированная инфузия улучшает гемодинамику.' },
+        { id: 6, 
+          type: 'info', 
+          content: 'Потребление кислорода стабильно, диурез 0.5 мл/кг/ч.' },
+        { id: 7, 
+          type: 'question', 
+          question: 'Когда выполняете контрольные культуры?', 
+          options: [
+            { text: 'Через 48 часов после старта АБТ', correct: true },
+            { text: 'Через 24 часа', correct: false },
+            { text: 'Не требуется', correct: false },
+          ], 
+          explanation: 'Контроль через 48 часов оценит эффективность терапии.' },
+        { id: 8, 
+          type: 'info', 
+          content: 'Культуры крови стерильны, состояние пациента улучшилось.' },
+      ]
+    },
+
+    {
+      id: 8,
+      title: 'Психотический эпизод у подростка',
+      category: 'Психиатрия',
+      description: '16-летний парень привезён в психиатрическую клинику с галлюцинациями.',
+      image: '',
+      difficulty: 5,
+      steps: [
+        { id: 1, 
+          type: 'question', 
+          question: 'Первичная оценка состояния: что важно уточнить?', 
+          options: [
+            { text: 'Наличие суицидальных мыслей', correct: true },
+            { text: 'Наличие зубной боли', correct: false },
+            { text: 'Наличие сыпи на коже', correct: false },
+          ], 
+          explanation: 'Безопасность пациента и риск суицида в приоритете.' },
+        { id: 2, 
+          type: 'info', 
+          content: 'Пациент отрицает суицидальные намерения, но агрессивен.' },
+        { id: 3, 
+          type: 'question', 
+          question: 'Какие препараты назначить для седации?', 
+          options: [
+            { text: 'Рисперидон перорально', correct: false },
+            { text: 'Лоразепам внутривенно', correct: true },
+            { text: 'Циталопрам перорально', correct: false },
+          ], 
+          explanation: 'Бензодиазепин быстро успокоит пациента.' },
+        { id: 4,
+          type: 'info', 
+          content: 'Пациент успокоился через 30 минут.' },
+        { id: 5,
+          type: 'question',
+          question: 'Что важнее всего при сборе анамнеза?',
+          options: [
+            { text: 'Приём психотропных препаратов', correct: true },
+            { text: 'Любимые хобби', correct: false },
+            { text: 'Последние оценки в школе', correct: false },
+          ],
+          explanation: 'Лекарственная история поможет исключить абстинентный синдром.' },
+        { id: 6, 
+          type: 'info', 
+          content: 'Выяснено, что неделю назад пациент бросил принимать сертралин.' },
+        { id: 7, 
+          type: 'question', 
+          question: 'Ваш следующий шаг?', 
+          options: [
+            { text: 'Возобновить сертралин', correct: false },
+            { text: 'Постепенно снизить дозу и переключить на другой СИОЗС', correct: true },
+            { text: 'Немедленно провести ЭЭГ', correct: false },
+          ], 
+          explanation: 'Плавная смена СИОЗС минимизирует риск рецидива.' },
+        { id: 8, 
+          type: 'info', 
+          content: 'Через 3 дня пациент стал менее агрессивным, смена терапии прошла без осложнений.' },
       ]
     },
     

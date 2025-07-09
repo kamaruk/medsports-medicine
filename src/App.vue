@@ -27,7 +27,7 @@ export default {
     const route = useRoute()
 
     const showFooter = computed(() => {
-      return !['/login', '/register'].includes(route.path)
+      return !['/login', '/register', '/profile', ].includes(route.path)
     })
 
     return { showFooter }
