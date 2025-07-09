@@ -1,7 +1,6 @@
 <template>
   <div class="login-page">
     <div class="background-overlay" />
-
     <v-container class="login-container">
       <transition name="slide-fade">
         <v-card class="login-card" elevation="10">
@@ -32,6 +31,14 @@
               Войти
             </v-btn>
           </v-form>
+          <v-alert
+            v-if="authError"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+          >
+            {{ authError }}
+          </v-alert>
 
 
           <div class="my-6 text-center divider">
@@ -71,7 +78,7 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue'
+  import { ref,computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
 
@@ -83,9 +90,18 @@
   const router = useRouter()
   const store = useStore()
 
-  const onLogin = () => {
-    store.dispatch('user/login', { email: email.value, password: password.value })
-    router.push('/')
+  const authError = computed(() => store.getters['user/authError'])
+
+  const onLogin = async () => {
+    const success = await store.dispatch('user/login', {
+      email: email.value,
+      password: password.value
+    })
+
+    if (success) {
+      router.push('/')
+    }
+    
   }
 
   const rules = {
@@ -100,85 +116,85 @@
 
 <style scoped>
 
-.login-page {
-  position: relative;
-  min-height: calc(100vh - 64px); 
-  background: linear-gradient(to right, #e3f2fd, #ffffff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .login-page {
+    position: relative;
+    min-height: calc(100vh - 64px); 
+    background: linear-gradient(to right, #e3f2fd, #ffffff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
 
-.background-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 30% 30%, rgba(25, 118, 210, 0.1), transparent 60%);
-  z-index: 0;
-  pointer-events: none;
-}
+  .background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 30%, rgba(25, 118, 210, 0.1), transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
 
 
-.login-container {
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  width: 100%;
-}
+  .login-container {
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    width: 100%;
+  }
 
 
-.login-card {
-  width: 100%;
-  max-width: 420px;
-  padding: 2rem;
-  border-radius: 16px;
-  background-color: white;
-  animation: drop-in 0.6s ease;
-}
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2rem;
+    border-radius: 16px;
+    background-color: white;
+    animation: drop-in 0.6s ease;
+  }
 
 
-.slide-fade-enter-active {
-  transition: all 0.5s ease;
-}
-.slide-fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
+  .slide-fade-enter-active {
+    transition: all 0.5s ease;
+  }
+  .slide-fade-enter-from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
 
-.divider {
-  position: relative;
-  color: #999;
-  font-size: 0.9rem;
-}
-.divider::before,
-.divider::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: #ccc;
-}
-.divider::before {
-  left: 0;
-}
-.divider::after {
-  right: 0;
-}
+  .divider {
+    position: relative;
+    color: #999;
+    font-size: 0.9rem;
+  }
+  .divider::before,
+  .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #ccc;
+  }
+  .divider::before {
+    left: 0;
+  }
+  .divider::after {
+    right: 0;
+  }
 
 
-.register-link {
-  color: #1976d2;
-  font-weight: 500;
-  text-decoration: none;
-}
-.register-link:hover {
-  text-decoration: underline;
-}
+  .register-link {
+    color: #1976d2;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .register-link:hover {
+    text-decoration: underline;
+  }
 </style>

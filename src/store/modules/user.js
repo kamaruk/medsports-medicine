@@ -16,25 +16,32 @@ export default {
       completedCases: [],
       achievements: []
     },
-    getters: {
-      completedCases: state => state.userData.completedCases || []
-    }
+    authError: null 
   }),
 
-  
-   mutations: {
-   setUser(state, userData) {
-    state.userData = {
-      name: userData.name || 'Новый пользователь',
-      email: userData.email || '',
-      role: userData.role || 'student',
-      avatar: userData.avatar || null,
-      completedCases: userData.completedCases || []
-    }
-    state.isAuthenticated = true
-    localStorage.setItem('userData', JSON.stringify(state.userData))
-    localStorage.setItem('isAuthenticated', 'true')
+  getters: {
+    completedCases: state => state.userData.completedCases || [],
+    authError: state => state.authError
   },
+
+  mutations: {
+    setUser(state, userData) {
+      state.userData = {
+        name: userData.name || 'Новый пользователь',
+        email: userData.email || '',
+        role: userData.role || 'student',
+        avatar: userData.avatar || null,
+        completedCases: userData.completedCases || []
+      }
+      state.isAuthenticated = true
+      state.authError = null 
+      localStorage.setItem('userData', JSON.stringify(state.userData))
+      localStorage.setItem('isAuthenticated', 'true')
+    },
+
+    setAuthError(state, error) {
+      state.authError = error
+    },
 
     logout(state) {
       state.userData = {
@@ -67,14 +74,15 @@ export default {
 
  actions: {
     login({ commit }, { email, password }) {
-      
       const demo = { email: 'demo@example.com', password: '123456', name: 'Demo Doctor' }
       if (email === demo.email && password === demo.password) {
         commit('setUser', { ...demo, password: undefined })
+        return true 
       } else {
         commit('setAuthError', 'Неверный email или пароль')
+        return false 
       }
     }
-  },
+  }
 }
 
