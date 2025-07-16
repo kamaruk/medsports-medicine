@@ -7,7 +7,7 @@ import ProfilePage from '../pages/ProfilePage.vue'
 import LoginPage from '../pages/LoginPage.vue'
 import RegisterPage from '../pages/RegisterPage.vue'
 import ContactPage from '../pages/ContactPage.vue'
-import CaseStePView from '../components/cases/CaseStepView.vue'
+import CaseStepView from '../components/cases/CaseStepView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomePage },
@@ -17,7 +17,7 @@ const routes = [
   { path: '/login', name: 'Login', component: LoginPage },
   { path: '/register', name: 'Register', component: RegisterPage },
   { path: '/contact', name: 'Contact', component: ContactPage },
-  { path: '/cases/:id/steps', name: 'CaseSteps', component: CaseStePView },
+  { path: '/cases/:id/steps', name: 'CaseSteps', component: CaseStepView },
 ]
 
 const router = createRouter({

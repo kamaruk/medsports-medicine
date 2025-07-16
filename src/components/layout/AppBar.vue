@@ -70,6 +70,7 @@
 
   const logout = () => {
     store.commit('user/logout')
+    store.commit('achievements/resetAchievements')
     drawer.value = false
     router.push('/login')
   }

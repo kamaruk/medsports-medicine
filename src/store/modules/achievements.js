@@ -1,5 +1,5 @@
 
-
+import { BADGES } from '@/data/badges.js'
 const STORAGE_KEY = 'my-med-trainer-achievements'
 
 
@@ -11,20 +11,13 @@ function loadEarned() {
   }
 }
 
-const BADGES = [
-  { id: 'first_case',     title: 'Первый кейс',       description: 'Поздравляем с первым пройденным кейсом!' },
-  { id: 'five_cases',     title: '5 кейсов',          description: 'Пройдено 5 кейсов' },
-  { id: 'ten_cases',      title: '10 кейсов',         description: 'Пройдено 10 кейсов' },
-  { id: 'high_accuracy',  title: 'Точность 100%',     description: 'Кейс пройден с идеальной точностью' },
-  
-]
 
 const state = () => ({
   earned: loadEarned()
 })
 
 const getters = {
-  allBadges:     () => BADGES,
+  allBadges: () => BADGES,
   earnedBadges:  state => state.earned.map(id => BADGES.find(b => b.id === id)).filter(Boolean)
 }
 
@@ -32,11 +25,15 @@ const mutations = {
   earnBadge(state, badgeId) {
     if (!state.earned.includes(badgeId)) {
       state.earned.push(badgeId)
-      
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.earned))
     }
+  },
+  resetAchievements(state) {
+    state.earned = []
+    localStorage.removeItem(STORAGE_KEY)
   }
 }
+//resetAchievements сделан для демонстрации работоспособности ачивок 
 
 const actions = {
   checkAchievements({ commit, rootState }) {
