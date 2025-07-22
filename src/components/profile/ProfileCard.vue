@@ -45,6 +45,8 @@
   import { computed, ref } from 'vue'
   import { useStore } from 'vuex'
   import defaultAvatar from '@/assets/images/default-avatar.png'
+  import avatar1 from '@/assets/images/avatar1.png'
+  import avatar2 from '@/assets/images/avatar2.png' 
 
   const store = useStore()
   const user = computed(() => store.state.user.userData || {})
@@ -56,38 +58,48 @@
   }
 
 
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-  
-    if (file.size > 200 * 1024) {
-      alert('Пожалуйста, загрузите изображение размером до 200 КБ.')
-      return
+ const avatars = [defaultAvatar, avatar1, avatar2]
+ const handleFileUpload = (e) => {
+    const random = Math.floor(Math.random() * avatars.length)
+    const updatedUser = {
+      ...user.value,
+      avatar: avatars[random]
     }
-
-  
-  if (!/^image\/(jpeg|png|jpg)$/.test(file.type)) {
-    alert('Можно загружать только изображения JPEG или PNG.')
-    return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const updatedUser = {
-        ...user.value,
-        avatar: reader.result,
-      }
-      try {
-        store.commit('user/setUser', updatedUser)
-      } catch (err) {
-        alert('Ошибка: превышен лимит хранилища. Попробуйте загрузить меньший файл.')
-      }
-    }
-    reader.readAsDataURL(file)
+    store.commit('user/setUser', updatedUser)
   }
 
+  /* Пример для демо (без ошибок localStorage)
+    const handleFileUpload = (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+    
+      if (file.size > 200 * 1024) {
+        alert('Пожалуйста, загрузите изображение размером до 200 КБ.')
+        return
+      }
+
+    
+    if (!/^image\/(jpeg|png|jpg)$/.test(file.type)) {
+      alert('Можно загружать только изображения JPEG или PNG.')
+      return
+      }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        const updatedUser = {
+          ...user.value,
+          avatar: reader.result,
+        }
+        try {
+          store.commit('user/setUser', updatedUser)
+        } catch (err) {
+          alert('Ошибка: превышен лимит хранилища. Попробуйте загрузить меньший файл.')
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  */
 
   const safeAvatar = computed(() => {
     if (user.value.avatar && user.value.avatar.trim() !== '') {
