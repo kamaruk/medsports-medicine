@@ -33,6 +33,7 @@
         <template v-if="step.type === 'question'">
           <h2 class="text-h6 font-weight-bold mb-6">{{ step.question }}</h2>
 
+          <!-- Варианты ответа -->
           <v-btn
             v-for="(option, idx) in step.options"
             :key="idx"
@@ -41,12 +42,13 @@
             size="large"
             class="mb-3 text-body-1"
             :color="selected === idx ? (option.correct ? 'success' : 'error') : 'primary'"
-            :disabled="selected !== null"
+            :disabled="selected !== null || timeOut"
             @click="selectOption(idx)"
           >
             {{ option.text }}
           </v-btn>
 
+          <!-- Показываем алерт если выбрано или время вышло -->
           <v-alert
             v-if="selected !== null"
             :type="step.options[selected]?.correct ? 'success' : 'error'"
@@ -55,6 +57,24 @@
           >
             {{ step.explanation }}
           </v-alert>
+
+          <v-alert
+            v-if="caseFailed"
+            type="error"
+            class="mt-4"
+            variant="tonal"
+          >
+            Время вышло! Кейс не пройден. Попробуйте пройти его снова.
+          </v-alert>
+
+          <!-- Кнопка для возврата -->
+          <div v-if="caseFailed" class="text-right mt-6">
+            <v-btn color="primary" to="/cases" rounded size="large">
+              Вернуться к кейсам
+            </v-btn>
+          </div>
+
+
         </template>
 
         <template v-else-if="step.type === 'info'">
@@ -62,18 +82,19 @@
           <p class="text-body-1 mt-3">{{ step.content }}</p>
         </template>
 
-        <div class="text-right mt-6">
+        <div class="text-right mt-6" v-if="!caseFailed">
           <v-btn
             color="primary"
             size="large"
             rounded
             @click="nextStep"
-            :disabled="step.type === 'question' && selected === null"
+            :disabled="step.type === 'question' && selected === null && !timeOut"
           >
             Следующий шаг
             <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
         </div>
+
       </v-card>
 
       <!-- Завершение кейса -->
@@ -132,6 +153,8 @@
   const selected = ref(null)
   const score = ref(0)
   const timer = ref(null)
+  const timeOut = ref(false)
+  const caseFailed = ref(false)
   const remainingTime = ref(10)
 
   const userAnswers = ref([])
@@ -150,25 +173,25 @@
   )
 
   function selectOption(index) {
-    if (selected.value === null) {
+    if (selected.value === null && !timeOut.value) {
       selected.value = index
-
       const isCorrect = step.value.options[index].correct
       if (isCorrect) score.value++
-
       userAnswers.value.push({
         stepId: step.value.id,
         question: step.value.question,
         selectedOption: step.value.options[index].text,
         isCorrect
       })
-
       clearInterval(timer.value)
     }
   }
 
+
   function nextStep() {
+    if (caseFailed.value) return 
     selected.value = null
+    timeOut.value = false
     currentStepIndex.value++
     if (currentStepIndex.value < totalSteps.value) {
       resetTimer()
@@ -183,10 +206,30 @@
       remainingTime.value--
       if (remainingTime.value <= 0) {
         clearInterval(timer.value)
-        nextStep()
+        if (selected.value === null) {
+          timeOut.value = true
+          caseFailed.value = true
+          
+          finishCaseAsFailed()
+        }
       }
     }, 1000)
   }
+
+  function finishCaseAsFailed() {
+    if (caseData.value && isAuthenticated.value) {
+      store.commit('user/saveCompletedCase', {
+        id: caseData.value.id,
+        title: caseData.value.title,
+        date: new Date().toISOString().split('T')[0],
+        accuracy: 0,
+        status: 'failed',
+        answers: userAnswers.value
+      })
+      store.dispatch('achievements/checkAchievements')
+    }
+  }
+
 
   function resetTimer() {
     if (step.value?.type === 'question') {

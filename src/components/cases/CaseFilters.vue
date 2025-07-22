@@ -167,7 +167,7 @@
   .difficulty-toggle,
   .status-toggle {
     display: flex;
-    flex-wrap: wrap;
+    
     gap: 0.5rem;
   }
 

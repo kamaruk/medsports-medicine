@@ -37,13 +37,16 @@ const mutations = {
 
 const actions = {
   checkAchievements({ commit, rootState }) {
-    const completed = (rootState.user.userData.completedCases || []).length
+    
+    const completedCases = (rootState.user.userData.completedCases || []).filter(c => c.status === 'success')
+    const completed = completedCases.length
 
     if (completed >= 1)  commit('earnBadge', 'first_case')
     if (completed >= 5)  commit('earnBadge', 'five_cases')
     if (completed >= 10) commit('earnBadge', 'ten_cases')
 
-    const last = rootState.user.userData.completedCases.slice(-1)[0]
+    
+    const last = completedCases.slice(-1)[0]
     if (last?.accuracy === 100) {
       commit('earnBadge', 'high_accuracy')
     }
