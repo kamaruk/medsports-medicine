@@ -5,7 +5,7 @@
         <div class="text-white text-caption">{{ caseData.category }}</div>
         <div class="text-white text-caption d-flex align-center">
           Уровень сложности:
-          <v-icon v-for="n in 3" :key="n" size="12" class="ml-1"
+          <v-icon v-for="n in 5" :key="n" size="12" class="ml-1"
             :color="n <= caseData.difficulty ? 'red' : 'white'">
             mdi-circle
           </v-icon>
@@ -46,9 +46,10 @@
     caseData: Object
   })
 
- const status = computed(() => {
+  const status = computed(() => {
+    
     const completed = (store.state.user.userData?.completedCases || []).find(
-      c => c.id === props.caseData.id
+      c => c.case_id === props.caseData.id 
     )
     return completed?.status || null
   })

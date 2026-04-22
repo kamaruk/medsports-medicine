@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import store from '@/store'
 import HomePage from '../pages/HomePage.vue'
 import CasesListPage from '../pages/CasesListPage.vue'
 import CaseDetailPage from '../pages/CaseDetailPage.vue'
@@ -18,6 +18,7 @@ const routes = [
   { path: '/register', name: 'Register', component: RegisterPage },
   { path: '/contact', name: 'Contact', component: ContactPage },
   { path: '/cases/:id/steps', name: 'CaseSteps', component: CaseStepView },
+  {path: '/admin', name: 'Admin', component: () => import('@/pages/AdminPage.vue'), meta: { requiresAuth: true, requiresAdmin: true }},
 ]
 
 const router = createRouter({
@@ -26,19 +27,27 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-
+  const isAuthenticated = localStorage.getItem('token');
   
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'Login' })
+    return next('/login');
+  }
+
+  if (to.meta.requiresAdmin) {
+      
+      const storeRole = store.state.user.userData?.role;
+      
+      const localRole = JSON.parse(localStorage.getItem('userData'))?.role;
+      
+      const role = storeRole || localRole;
+
+      if (role !== 'admin') {
+          alert('Доступ запрещен. Вы не администратор.');
+          return next('/');
+      }
   }
   
-  else if (isAuthenticated && (to.name === 'Login' || to.name === 'Register')) {
-    next({ name: 'Home' }) 
-  }
-  else {
-    next()
-  }
+  next();
 })
 
 export default router

@@ -10,6 +10,18 @@
             <p class="text-subtitle-2 text-grey-darken-1">Регистрация за минуту!</p>
           </v-card-title>
 
+          <!-- СООБЩЕНИЕ ОБ ОШИБКЕ -->
+          <v-alert
+            v-if="errorMessage"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+            @click:close="errorMessage = ''"
+          >
+            {{ errorMessage }}
+          </v-alert>
+
           <v-form ref="registerForm" v-model="valid" @submit.prevent="onRegister">
             <v-text-field
               v-model="name"
@@ -37,31 +49,21 @@
               :rules="[required, ...passwordConfirmRules]"
               type="password"
               required
-              
             />
-
-            <v-radio-group
-              v-model="role"
-              row
-              class="mt-4"
-            >
-              <label class="text-caption mb-1">Выберите роль:</label>
-              <v-radio label="Студент" value="student" color="primary" />
-              <v-radio label="Преподаватель" value="teacher" color="primary" />
-            </v-radio-group>
 
             <v-btn
               color="primary"
               type="submit"
               class="mt-4 rounded-pill"
               :disabled="!valid"
+              :loading="loading"
               block
             >
               Зарегистрироваться
             </v-btn>
           </v-form>
 
-          <div class="mt-4 text-center">
+          <div class="mt-6 text-center">
             Уже есть аккаунт?
             <RouterLink to="/login" class="login-link">Войти</RouterLink>
           </div>
@@ -82,7 +84,8 @@
   const passwordConfirm = ref('')
   const valid = ref(false)
   const registerForm = ref(null)
-  const role = ref('student')
+  const loading = ref(false)
+  const errorMessage = ref('') 
 
   const store = useStore()
   const router = useRouter()
@@ -104,20 +107,27 @@
     v => v === password.value || 'Пароли не совпадают'
   ]
 
-
-  function onRegister() {
+  async function onRegister() {
     if (!registerForm.value.validate()) return
 
-    const userData = {
+    loading.value = true;
+    errorMessage.value = '';
+
+    const result = await store.dispatch('user/register', {
       name: name.value,
       email: email.value,
-      role: role.value,
-      avatar: null,
-      completedCases: []
-    }
+      password: password.value
+    });
 
-    store.commit('user/setUser', userData)
-    router.push('/profile')
+    loading.value = false;
+
+    if (result.success) {
+      alert('Регистрация прошла успешно! Теперь войдите.');
+      router.push('/login');
+    } else {
+      
+      errorMessage.value = result.message;
+    }
   }
 </script>
 

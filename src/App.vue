@@ -1,6 +1,3 @@
-<!-- Спортивное врачевание
-Разработка сайта, на котором молодые врачи смогут прокачивать свои навыки, решая интерактивные задачи (по аналогии со спортивным программированием)-->
-
 <template>
   <v-app>
     <AppBar />
@@ -9,14 +6,14 @@
       <router-view />
     </v-main>
 
-    <AppFooter  v-if="showFooter"/>
+    <AppFooter v-if="showFooter" />
   </v-app>
 </template>
 
-
 <script>
 import { useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
 import AppBar from '@/components/layout/AppBar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 
@@ -25,12 +22,32 @@ export default {
   components: { AppBar, AppFooter },
   setup() {
     const route = useRoute()
+    const store = useStore()
 
+    // Логика показа футера
     const showFooter = computed(() => {
-      return !['/login', '/register', '/profile', ].includes(route.path)
+      return !['/login', '/register', '/profile'].includes(route.path)
     })
+
+    // ЗАГРУЗКА ДАННЫХ ПРИ СТАРТЕ ПРИЛОЖЕНИЯ
+    onMounted(async () => {
+      
+      await store.dispatch('cases/fetchCases');
+
+      
+      if (store.state.user.isAuthenticated) {
+         await store.dispatch('user/fetchProfile');
+      }
+    });
 
     return { showFooter }
   }
 }
 </script>
+
+<style>
+/* Глобальные стили, если нужны */
+body {
+  font-family: 'Roboto', sans-serif;
+}
+</style>

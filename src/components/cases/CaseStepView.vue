@@ -40,7 +40,7 @@
             block
             rounded
             size="large"
-            class="mb-3 text-body-1"
+            class="mb-3 text-body-1 option-btn" 
             :color="selected === idx ? (option.correct ? 'success' : 'error') : 'primary'"
             :disabled="selected !== null || timeOut"
             @click="selectOption(idx)"
@@ -105,20 +105,18 @@
         <p class="text-body-1 font-weight-medium mb-4">Точность: {{ accuracy }}%</p>
         
         
-        <div class="mt-6 text-left" style="max-width: 600px; margin: 0 auto;">
+       <div class="mt-6 text-left answers-scroll-container">
           <h3 class="text-h6 font-weight-bold mb-3">Ваши ответы:</h3>
-          <v-list dense>
+          <v-list dense class="answers-list">
             <v-list-item
               v-for="answer in userAnswers"
               :key="answer.stepId"
             >
-              
-                <v-list-item-title>{{ answer.question }}</v-list-item-title>
-                <v-list-item-subtitle>
-                  Вы выбрали: {{ answer.selectedOption }} — 
-                  <strong>{{ answer.isCorrect ? '✅ Верно' : '❌ Неверно' }}</strong>
-                </v-list-item-subtitle>
-              
+              <v-list-item-title>{{ answer.question }}</v-list-item-title>
+              <v-list-item-subtitle>
+                Вы выбрали: {{ answer.selectedOption }} — 
+                <strong>{{ answer.isCorrect ? '✅ Верно' : '❌ Неверно' }}</strong>
+              </v-list-item-subtitle>
             </v-list-item>
           </v-list>
         </div>
@@ -138,6 +136,7 @@
   import { ref, computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
+  import api from '@/api' // Импортируем api для запросов
 
   const store = useStore()
   const route = useRoute()
@@ -187,7 +186,6 @@
     }
   }
 
-
   function nextStep() {
     if (caseFailed.value) return 
     selected.value = null
@@ -197,6 +195,22 @@
       resetTimer()
     } else {
       clearInterval(timer.value)
+    }
+  }
+
+  // Функция отправки результата на сервер
+  async function saveResultToServer(status, accuracyScore, answers) {
+    try {
+      await api.post('/user/progress', {
+        caseId: caseData.value.id,
+        status: status,
+        accuracy: accuracyScore,
+        answers: answers
+      });
+     
+      store.dispatch('user/fetchProfile');
+    } catch (err) {
+      console.error("Ошибка сохранения прогресса", err);
     }
   }
 
@@ -210,26 +224,12 @@
           timeOut.value = true
           caseFailed.value = true
           
-          finishCaseAsFailed()
+          
+          saveResultToServer('failed', 0, userAnswers.value);
         }
       }
     }, 1000)
   }
-
-  function finishCaseAsFailed() {
-    if (caseData.value && isAuthenticated.value) {
-      store.commit('user/saveCompletedCase', {
-        id: caseData.value.id,
-        title: caseData.value.title,
-        date: new Date().toISOString().split('T')[0],
-        accuracy: 0,
-        status: 'failed',
-        answers: userAnswers.value
-      })
-      store.dispatch('achievements/checkAchievements')
-    }
-  }
-
 
   function resetTimer() {
     if (step.value?.type === 'question') {
@@ -249,68 +249,93 @@
   watch(step, resetTimer)
 
   watchEffect(() => {
+    
     if (!step.value && caseData.value && isAuthenticated.value) {
-      const isSuccess = accuracy.value >= 80
-      store.commit('user/saveCompletedCase', {
-        id: caseData.value.id,
-        title: caseData.value.title,
-        date: new Date().toISOString().split('T')[0],
-        accuracy: accuracy.value,
-        status: isSuccess ? 'success' : 'failed',
-        answers: userAnswers.value
-      })
-      store.dispatch('achievements/checkAchievements')
+      const isSuccess = accuracy.value >= 80;
+      
+      
+      saveResultToServer(isSuccess ? 'success' : 'failed', accuracy.value, userAnswers.value);
     }
   })
 </script>
 
 
-<style scoped>  
-    .case-step-container {
+<style scoped>
+  .case-step-container {
     max-width: 800px;
     margin: 0 auto;
     text-align: center;
-    }
+  }
 
-    .step-question {
+  /* --- ИСПРАВЛЕНИЕ КНОПОК --- */
+  
+  /* Сама кнопка */
+  :deep(.option-btn) {
+    height: auto !important; /* Автоматическая высота */
+    min-height: 48px;        /* Минимальная высота */
+    white-space: normal !important; /* Разрешаем перенос текста */
+    padding: 12px 20px !important;  /* Увеличиваем отступы */
+    display: inline-flex !important;
+  }
+
+  /* Внутренний контент кнопки (где лежит текст) */
+  :deep(.option-btn .v-btn__content) {
+    white-space: normal !important;
+    flex: 1 1 auto;
+    line-height: 1.4;
+  }
+
+  /* --- ИСПРАВЛЕНИЕ СПИСКА ОТВЕТОВ --- */
+
+  /* Контейнер списка ответов на мобильном */
+  .answers-scroll-container {
+    max-width: 100%;
+    overflow-x: auto; /* Добавляем прокрутку, если очень длинный текст */
+    padding-bottom: 10px;
+  }
+
+  /* Текст внутри пунктов списка */
+  :deep(.answers-list .v-list-item-subtitle) {
+    white-space: normal !important; /* Отменяем обрезание */
+    overflow: visible !important;
+    display: block;
+    word-break: break-word; /* Перенос длинных слов */
+  }
+
+  :deep(.answers-list .v-list-item-title) {
+    white-space: normal !important;
+  }
+  
+  /* Остальные стили */
+  .step-question {
     font-size: 1.5rem;
     font-weight: 600;
     color: #0d47a1;
-    }
+  }
 
-    .option-btn {
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    }
-
-    .option-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-   .info-text {
+  .info-text {
     font-size: 1.1rem;
     color: #444;
     line-height: 1.6;
     max-width: 600px;
     margin: 0 auto;
     text-align: center;
-    }
+  }
 
-    .explanation-alert {
+  .explanation-alert {
     font-size: 0.95rem;
-    }
+  }
 
-    .card-step {
+  .card-step {
     border: 1px solid #e0e0e0;
     background: #ffffff;
-    }
+  }
 
-    .finish-section {
+  .finish-section {
     animation: fadeIn 0.5s ease-out;
-    }
+  }
 
-    @keyframes fadeIn {
+  @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(12px);
@@ -319,5 +344,5 @@
         opacity: 1;
         transform: translateY(0);
     }
-    }
+  }
 </style>

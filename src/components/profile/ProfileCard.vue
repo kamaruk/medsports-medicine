@@ -3,18 +3,10 @@
     <v-row no-gutters>
       <!-- Аватар -->
       <v-col cols="12" md="4" class="avatar-section">
-        <div class="avatar-wrapper" @click="triggerFileInput">
+        <div class="avatar-wrapper">
           <v-avatar size="120" class="shadow-avatar">
             <v-img :src="safeAvatar" cover />
           </v-avatar>
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            class="d-none"
-            @change="handleFileUpload"
-          />
-          <p class="change-avatar-hint">Сменить фото</p>
         </div>
       </v-col>
 
@@ -27,7 +19,7 @@
         </p>
         <p>
           <v-icon start color="primary">mdi-badge-account-outline</v-icon>
-          {{ user.role || 'Пользователь' }}
+          {{ user.role === 'admin' ? 'Администратор' : 'Студент' }}
         </p>
         <v-btn
           color="primary"
@@ -42,64 +34,12 @@
 </template>
 
 <script setup>
-  import { computed, ref } from 'vue'
+  import { computed } from 'vue'
   import { useStore } from 'vuex'
   import defaultAvatar from '@/assets/images/default-avatar.png'
-  import avatar1 from '@/assets/images/avatar1.png'
-  import avatar2 from '@/assets/images/avatar2.png' 
 
   const store = useStore()
   const user = computed(() => store.state.user.userData || {})
-
-  const fileInput = ref(null)
-
-  const triggerFileInput = () => {
-    fileInput.value?.click()
-  }
-
-
- const avatars = [defaultAvatar, avatar1, avatar2]
- const handleFileUpload = (e) => {
-    const random = Math.floor(Math.random() * avatars.length)
-    const updatedUser = {
-      ...user.value,
-      avatar: avatars[random]
-    }
-    store.commit('user/setUser', updatedUser)
-  }
-
-  /* Пример для демо (без ошибок localStorage)
-    const handleFileUpload = (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-
-    
-      if (file.size > 200 * 1024) {
-        alert('Пожалуйста, загрузите изображение размером до 200 КБ.')
-        return
-      }
-
-    
-    if (!/^image\/(jpeg|png|jpg)$/.test(file.type)) {
-      alert('Можно загружать только изображения JPEG или PNG.')
-      return
-      }
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        const updatedUser = {
-          ...user.value,
-          avatar: reader.result,
-        }
-        try {
-          store.commit('user/setUser', updatedUser)
-        } catch (err) {
-          alert('Ошибка: превышен лимит хранилища. Попробуйте загрузить меньший файл.')
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-  */
 
   const safeAvatar = computed(() => {
     if (user.value.avatar && user.value.avatar.trim() !== '') {
@@ -132,18 +72,6 @@
     transition: transform 0.2s;
   }
 
-  .shadow-avatar:hover {
-    transform: scale(1.05);
-    cursor: pointer;
-  }
-
-  .change-avatar-hint {
-    font-size: 0.75rem;
-    color: #607d8b;
-    margin-top: 8px;
-    margin-left: 16px;
-  }
-
   .info-section {
     display: flex;
     flex-direction: column;
@@ -164,9 +92,5 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  .d-none {
-    display: none;
   }
 </style>

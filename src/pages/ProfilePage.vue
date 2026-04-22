@@ -42,14 +42,15 @@
             <v-list-item
               v-for="(caseItem, i) in recentCases"
               :key="i"
-              :title="caseItem.title"
-              :subtitle="`Пройдено: ${caseItem.date}`"
             >
               <template #prepend>
                 <v-icon color="primary">mdi-clipboard-check-outline</v-icon>
               </template>
 
-              
+              <v-list-item-title>{{ caseItem.title }}</v-list-item-title>
+              <v-list-item-subtitle>
+                Пройдено: {{ formatDate(caseItem.completed_at) }} | Точность: {{ caseItem.accuracy }}%
+              </v-list-item-subtitle>
             </v-list-item>
           </v-list>
         </v-card>
@@ -104,8 +105,9 @@
   </v-container>
 </template>
 
+
 <script setup>
-  import { computed,ref  } from 'vue'
+  import { computed, ref } from 'vue'
   import { useStore } from 'vuex'
   import ProfileCard from '@/components/profile/ProfileCard.vue'
   import EditProfileDialog from '@/components/profile/EditProfileDialog.vue'
@@ -116,7 +118,6 @@
   const completedCases = computed(() =>
     (userData.value.completedCases || []).filter(c => c.status === 'success')
   )
-
 
   const completedCount = computed(() => completedCases.value.length)
 
@@ -130,44 +131,51 @@
     return completedCases.value.reduce((acc, c) => acc + (c.accuracy || 0), 0)
   })
 
+  
  const recentCases = computed(() => {
-  return [...completedCases.value]
-    .filter(c => !!c) 
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5)
+    return [...(userData.value.completedCases || [])]
+      .filter(c => !!c)
+      .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
+      .slice(0, 5)
   })
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Неизвестно'
+    return new Date(dateStr).toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
   const earnedBadges = computed(() =>
-    store.getters['achievements/earnedBadges'] || []
+    userData.value.achievements || []
   )
 
   const editDialog = ref(false)
-
 </script>
 
 
-
-
 <style scoped>
-.badge-card {
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  overflow: hidden;
-}
-.badge-card--hover {
-  transform: translateY(-4px);
-}
-.badge-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-}
-.badge-desc {
-  font-size: 0.95rem;
-  color: #555;
-  background-color: #f5f5f5;
-  border-top: 1px solid #e0e0e0;
-  border-radius: 0 0 12px 12px;
-}
+  .badge-card {
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .badge-card--hover {
+    transform: translateY(-4px);
+  }
+  .badge-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  .badge-desc {
+    font-size: 0.95rem;
+    color: #555;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    border-radius: 0 0 12px 12px;
+  }
 </style>

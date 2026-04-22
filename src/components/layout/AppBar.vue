@@ -13,9 +13,12 @@
       <v-btn variant="text" class="nav-btn" to="/">Главная</v-btn>
       <v-btn variant="text" class="nav-btn" to="/cases">Кейсы</v-btn>
       <v-btn variant="text" class="nav-btn" to="/contact">Связаться с нами</v-btn>
+
+       <v-btn v-if="isAdmin" variant="text" class="nav-btn" to="/admin" color="yellow"> <v-icon start>mdi-shield-account</v-icon>Админ</v-btn>
+
     </div>
 
-    <v-spacer />
+     <v-spacer />
 
     <!-- Кнопки справа -->
     <div class="d-none d-md-flex align-center nav-right">
@@ -42,6 +45,10 @@
       <v-list-item to="/" title="Главная" />
       <v-list-item to="/cases" title="Кейсы" />
       <v-list-item to="/contact" title="Связаться с нами" />
+      
+      <!-- АДМИНКА В МОБИЛЬНОМ МЕНЮ -->
+      <v-list-item v-if="isAdmin" to="/admin" title="Админ-панель" />
+
       <v-divider class="my-2" />
       <template v-if="!isAuthenticated">
         <v-list-item to="/login" title="Войти" />
@@ -65,12 +72,16 @@
   const store = useStore()
   const router = useRouter()
 
-  const isAuthenticated = computed(() => store.state.user.isAuthenticated)
   const skyColor = '#87CEEB'
+
+  const isAuthenticated = computed(() => store.state.user.isAuthenticated)
+  
+  const isAdmin = computed(() => {
+    return store.state.user.userData?.role === 'admin'
+  })
 
   const logout = () => {
     store.commit('user/logout')
-    store.commit('achievements/resetAchievements')
     drawer.value = false
     router.push('/login')
   }

@@ -49,7 +49,7 @@
         rounded="xl"
       >
         <v-btn :value="null">Все</v-btn>
-        <v-btn v-for="n in 3" :key="n" :value="n">{{ n }}</v-btn>
+        <v-btn v-for="n in 5" :key="n" :value="n">{{ n }}</v-btn>
       </v-btn-toggle>
 
       <h3 class="filter-title status-title">Статус</h3>

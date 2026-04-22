@@ -17,7 +17,7 @@
           <div class="d-flex align-center mb-3">
             <span class="text-subtitle-1 font-weight-medium mr-2">Сложность:</span>
             <v-icon
-              v-for="n in 3"
+              v-for="n in 5"
               :key="n"
               size="18"
               class="mr-1"

@@ -16,11 +16,25 @@
             :rules="[rules.required, rules.email]"
             required
           />
+          
+          <!-- Загрузка аватара -->
+          <div class="mb-4">
+             <v-btn color="secondary" variant="outlined" @click="$refs.fileInput.click()">
+               <v-icon start>mdi-camera</v-icon>
+               Изменить фото
+             </v-btn>
+             <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="handleFileUpload" />
+             <div v-if="avatarPreview" class="mt-2">
+                <v-avatar size="60">
+                   <v-img :src="avatarPreview" />
+                </v-avatar>
+             </div>
+          </div>
+
           <v-text-field
             v-model="password"
-            label="Новый пароль"
+            label="Новый пароль (оставьте пустым, если не меняете)"
             type="password"
-            :rules="[rules.minLength]"
           />
           <v-text-field
             v-model="confirmPassword"
@@ -34,7 +48,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text @click="dialog = false">Отмена</v-btn>
-        <v-btn :disabled="!formValid" color="primary" @click="save">Сохранить</v-btn>
+        <v-btn :disabled="!formValid" color="primary" :loading="loading" @click="save">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -46,6 +60,7 @@ import { ref, computed, watch } from 'vue'
 
 const store = useStore()
 const dialog = defineModel()
+const loading = ref(false)
 
 const user = computed(() => store.state.user.userData || {})
 
@@ -53,6 +68,8 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const avatar = ref('') // Тут будет Base64 строка
+const avatarPreview = ref('') // Для превью
 
 const form = ref(null)
 const formValid = ref(true)
@@ -60,33 +77,62 @@ const formValid = ref(true)
 const rules = {
   required: v => !!v || 'Обязательное поле',
   email: v => /.+@.+\..+/.test(v) || 'Некорректный email',
-  minLength: v => !v || v.length >= 6 || 'Мин. 6 символов',
 }
 
 const matchPassword = v => v === password.value || 'Пароли не совпадают'
 
+// Сброс формы при открытии
 watch(dialog, (open) => {
   if (open) {
     name.value = user.value.name || ''
     email.value = user.value.email || ''
     password.value = ''
     confirmPassword.value = ''
+    avatar.value = user.value.avatar || ''
+    avatarPreview.value = user.value.avatar || ''
   }
 })
 
-const save = () => {
+// Обработка файла
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) { // 500 КБ
+    alert('Фото слишком большое. Пожалуйста, выберите файл меньше 500КБ.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    avatar.value = reader.result; // Base64 строка
+    avatarPreview.value = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+const save = async () => {
   if (!form.value?.validate()) return
 
-  const updatedUser = {
-    ...user.value,
+  loading.value = true;
+  
+  const payload = {
     name: name.value,
     email: email.value,
-    
+    avatar: avatar.value
+  };
+
+  
+  if (password.value) {
+    payload.password = password.value;
   }
 
-  store.commit('user/setUser', updatedUser)
-  dialog.value = false
+  const result = await store.dispatch('user/updateProfile', payload);
 
+  loading.value = false;
 
+  if (result.success) {
+    dialog.value = false;
+  } else {
+    alert(result.message || 'Ошибка');
+  }
 }
 </script>

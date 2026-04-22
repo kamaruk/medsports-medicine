@@ -1,9 +1,5 @@
 <template>
-  <v-footer
-    padless
-    
-    class="footer"
-  >
+  <v-footer padless class="footer">
     <v-container>
       <v-row>
         <!-- Соцсети -->
@@ -11,19 +7,19 @@
           <h3 class="footer-title">Мы в соцсетях</h3>
           <v-btn
             icon
-            href="https://facebook.com"
+            href="https://vk.com"
             target="_blank"
-            aria-label="Facebook"
+            aria-label="VK"
           >
-            <v-icon size="28">mdi-facebook</v-icon>
+            <v-icon size="28">mdi-alpha-v-circle-outline</v-icon>
           </v-btn>
           <v-btn
             icon
-            href="https://twitter.com"
+            href="https://web.telegram.org"
             target="_blank"
-            aria-label="Twitter"
+            aria-label="Telegram"
           >
-            <v-icon size="28">mdi-twitter</v-icon>
+            <v-icon size="28">mdi-alpha-t-circle-outline</v-icon>
           </v-btn>
           <v-btn
             icon
@@ -32,14 +28,6 @@
             aria-label="Instagram"
           >
             <v-icon size="28">mdi-instagram</v-icon>
-          </v-btn>
-          <v-btn
-            icon
-            href="https://linkedin.com"
-            target="_blank"
-            aria-label="LinkedIn"
-          >
-            <v-icon size="28">mdi-linkedin</v-icon>
           </v-btn>
         </v-col>
 

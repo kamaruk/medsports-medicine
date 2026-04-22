@@ -19,6 +19,11 @@
             <CaseCard :caseData="caseItem" />
           </v-col>
         </v-row>
+        
+        <!-- Если кейсов нет -->
+        <v-alert v-if="filteredCases.length === 0" type="info" variant="tonal" class="mt-4">
+          Кейсы по выбранным фильтрам не найдены.
+        </v-alert>
       </v-col>
     </v-row>
   </v-container>
@@ -32,23 +37,28 @@
 
   const store = useStore()
   const allCases = computed(() => store.state.cases.cases)
-  const completedCaseIds = computed(() =>
-    (store.state.user.userData?.completedCases || []).map(c => c.id)
-  )
 
   const selectedFilters = ref({
     category: null,
     difficulty: null,
-    query: ''
+    query: '',
+    status: null
   })
 
   const filteredCases = computed(() => {
     return allCases.value.filter(c => {
+      // 1. Фильтр по категории
       const byCategory = !selectedFilters.value.category || c.category === selectedFilters.value.category
+      
+      // 2. Фильтр по сложности
       const byDifficulty = !selectedFilters.value.difficulty || c.difficulty === selectedFilters.value.difficulty
+      
+      // 3. Фильтр по поиску (название)
       const bySearch = !selectedFilters.value.query || c.title.toLowerCase().includes(selectedFilters.value.query)
 
-      const completed = (store.state.user.userData?.completedCases || []).find(cc => cc.id === c.id)
+      // 4. Фильтр по статусу
+      // Ищем запись о прогрессе для текущего кейса c.id
+      const completed = (store.state.user.userData?.completedCases || []).find(cc => cc.case_id === c.id)
       const status = completed?.status || null
 
       const byStatus =
