@@ -5,7 +5,7 @@
 
 ## 📂 Структура проекта
 
-```
+---
 my-med-trainer/
 ├── db/                    # Инициализация Базы Данных
 │   └── init.db            # SQL скрипт (создание таблиц)
@@ -36,7 +36,7 @@ my-med-trainer/
 ├── package.json
 ├── vite.config.js
 └── README.md
-```
+---
 
 ---
 ## 🚀 Запуск проекта
@@ -172,12 +172,6 @@ INSERT INTO achievements (id, title, description) VALUES
     *     admin@admin.ru
     *     admin!
 
-**Данные для подключения к БД (Docker):**
-*   Host: `localhost`
-*   Port: `5433` (или `5432` если локально)
-*   User: `postgres`
-*   Pass: `postgres`
-*   DB: `med_trainer`
 
 ---
 
