@@ -1,79 +1,198 @@
-# Vuetify (Default)
+```markdown
+# My Med Trainer
 
-This is the official scaffolding tool for Vuetify, designed to give you a head start in building your new Vuetify application. It sets up a base template with all the necessary configurations and standard directory structure, enabling you to begin development without the hassle of setting up the project from scratch.
+Платформа для обучения врачей и студентов через интерактивные медицинские кейсы.
 
-## ❗️ Important Links
+## 🛠 Технологии
 
-- 📄 [Docs](https://vuetifyjs.com/)
-- 🚨 [Issues](https://issues.vuetifyjs.com/)
-- 🏬 [Store](https://store.vuetifyjs.com/)
-- 🎮 [Playground](https://play.vuetifyjs.com/)
-- 💬 [Discord](https://community.vuetifyjs.com)
+*   **Frontend:** Vue.js 3, Vuetify 3, Vuex, Axios.
+*   **Backend:** Node.js, Express.js.
+*   **Database:** PostgreSQL.
+*   **Deploy:** Docker.
 
-## 💿 Install
+---
 
-Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
+## 📂 Структура проекта
 
-| Package Manager                                                | Command        |
-|---------------------------------------------------------------|----------------|
-| [yarn](https://yarnpkg.com/getting-started)                   | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install)     | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                          | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                        | `bun install`  |
-
-After completing the installation, your environment is ready for Vuetify development.
-
-## ✨ Features
-
-- 🖼️ **Optimized Front-End Stack**: Leverage the latest Vue 3 and Vuetify 3 for a modern, reactive UI development experience. [Vue 3](https://v3.vuejs.org/) | [Vuetify 3](https://vuetifyjs.com/en/)
-- 🗃️ **State Management**: Integrated with [Pinia](https://pinia.vuejs.org/), the intuitive, modular state management solution for Vue.
-- 🚦 **Routing and Layouts**: Utilizes Vue Router for SPA navigation and vite-plugin-vue-layouts for organizing Vue file layouts. [Vue Router](https://router.vuejs.org/) | [vite-plugin-vue-layouts](https://github.com/JohnCampionJr/vite-plugin-vue-layouts)
-- ⚡ **Next-Gen Tooling**: Powered by Vite, experience fast cold starts and instant HMR (Hot Module Replacement). [Vite](https://vitejs.dev/)
-- 🧩 **Automated Component Importing**: Streamline your workflow with unplugin-vue-components, automatically importing components as you use them. [unplugin-vue-components](https://github.com/antfu/unplugin-vue-components)
-
-These features are curated to provide a seamless development experience from setup to deployment, ensuring that your Vuetify application is both powerful and maintainable.
-
-## 💡 Usage
-
-This section covers how to start the development server and build your project for production.
-
-### Starting the Development Server
-
-To start the development server with hot-reload, run the following command. The server will be accessible at [http://localhost:3000](http://localhost:3000):
-
-```bash
-yarn dev
+```
+my-med-trainer/
+├── db/ # Инициализация Базы Данных
+│ └── init.db # SQL скрипт (создание таблиц)
+├── public/ # Статические файлы фронтенда
+│ ├── animations/
+│ └── videos/
+├── server/ # Бэкенд (Node.js + Express)
+│ ├── middleware/ # Проверки авторизации
+│ ├── routes/ # API маршруты
+│ ├── uploads/ # Загруженные файлы (аватарки)
+│ ├── .env # Переменные окружения (создать вручную)
+│ ├── db.js # Подключение к PostgreSQL
+│ ├── Dockerfile # Инструкция для Docker
+│ └── index.js # Точка входа
+├── src/ # Фронтенд (Vue.js 3)
+│ ├── api/ # Настройка Axios
+│ ├── assets/ # Картинки, иконки
+│ ├── components/ # Vue компоненты
+│ ├── pages/ # Страницы (Views)
+│ ├── router/ # Маршрутизация
+│ ├── store/ # Хранилище данных (Vuex)
+│ ├── plugins/ # Vuetify
+│ ├── App.vue
+│ └── main.js
+├── .gitignore
+├── docker-compose.yml # Оркестрация контейнеров
+├── Dockerfile # Сборка фронтенда (опционально)
+├── package.json
+├── vite.config.js
+└── README.md
 ```
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+---
 
-> Add NODE_OPTIONS='--no-warnings' to suppress the JSON import warnings that happen as part of the Vuetify import mapping. If you are on Node [v21.3.0](https://nodejs.org/en/blog/release/v21.3.0) or higher, you can change this to NODE_OPTIONS='--disable-warning=5401'. If you don't mind the warning, you can remove this from your package.json dev script.
+## 🚀 Запуск проекта
 
-### Building for Production
+### Способ 1: Локальный запуск (Разработка)
 
-To build your project for production, use:
+**Требования:** Node.js, PostgreSQL.
 
-```bash
-yarn build
+#### 1. База Данных
+*   Создайте БД `med_trainer`.
+*   Выполните скрипт из файла `db/init.db` (SQL код ниже).
+
+#### 2. Бэкенд (Папка `server/`)
+Файл `.env` в папке `server/`:
+```env
+DB_USER=postgres
+DB_PASSWORD=ВАШ_ПАРОЛЬ
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=med_trainer
+JWT_SECRET=secret_key_123
+PORT=3000
 ```
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+#### 3. Запуск Бэкенда (папка server)
+```bash
+cd server
+npm install
+node index.js
+```
+Сервер запустится на `http://localhost:3000`.
 
-Once the build process is completed, your application will be ready for deployment in a production environment.
+#### 4. Запуск Фронтенда (корневая папка)
+```bash
+npm install
+npm run dev
+```
+Клиент запустится на `http://localhost:5173`.
 
-## 💪 Support Vuetify Development
+---
 
-This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:
+Способ 2: Docker (Автоматический запуск)
+Этот способ поднимает Базу Данных и Сервер автоматически. Фронтенд запускается отдельно.
 
-- [Requesting Enterprise Support](https://support.vuetifyjs.com/)
-- [Sponsoring John on Github](https://github.com/users/johnleider/sponsorship)
-- [Sponsoring Kael on Github](https://github.com/users/kaelwd/sponsorship)
-- [Supporting the team on Open Collective](https://opencollective.com/vuetify)
-- [Becoming a sponsor on Patreon](https://www.patreon.com/vuetify)
-- [Becoming a subscriber on Tidelift](https://tidelift.com/subscription/npm/vuetify)
-- [Making a one-time donation with Paypal](https://paypal.me/vuetify)
+1. Подготовка файлов
+Убедитесь, что у вас созданы файлы:
 
-## 📑 License
-[MIT](http://opensource.org/licenses/MIT)
+db/init.db (с SQL кодом создания таблиц).
+server/Dockerfile.
+docker-compose.yml.
+2. Запуск
+В корне проекта выполните:
 
-Copyright (c) 2016-present Vuetify, LLC
+docker-compose up --build
+
+Docker сам создаст контейнеры, применит скрипт init.db и запустит сервер.
+Фронтенд запустите отдельно командой npm run dev.
+
+🗄 Инициализация Базы Данных (db/init.db)
+Этот файл выполняется автоматически при первом запуске Docker. Если запускаете локально — выполните этот код вручную в pgAdmin.
+
+
+-- Таблица пользователей
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'student',
+    avatar TEXT
+);
+
+-- Таблица кейсов
+CREATE TABLE cases (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(255),
+    description TEXT,
+    image TEXT,
+    difficulty INTEGER,
+    steps JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Прогресс пользователей
+CREATE TABLE user_cases (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    case_id INTEGER REFERENCES cases(id),
+    status VARCHAR(50),
+    accuracy INTEGER,
+    answers JSONB,
+    completed_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, case_id)
+);
+
+-- Шаблоны достижений
+CREATE TABLE achievements (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT
+);
+
+-- Связь пользователей и достижений
+CREATE TABLE user_achievements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    achievement_id VARCHAR(50) REFERENCES achievements(id),
+    earned_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, achievement_id)
+);
+
+-- Заполнение достижений
+INSERT INTO achievements (id, title, description) VALUES 
+('first_case', 'Первый кейс', 'Поздравляем с первым пройденным кейсом!'),
+('five_cases', '5 кейсов', 'Пройдено 5 кейсов'),
+('ten_cases', '10 кейсов', 'Пройдено 10 кейсов'),
+('high_accuracy', 'Точность 100%', 'Кейс пройден с идеальной точностью');
+
+👤 Тестовые аккаунты и Роли
+Регистрация на сайте открыта для всех. Роли назначаются в базе данных.
+
+Студент:
+Зарегистрируйтесь через сайт.
+Роль student присваивается автоматически.
+Администратор:
+Зарегистрируйте обычный аккаунт.
+Зайдите в БД (pgAdmin или терминал) и выполните:
+
+UPDATE users SET role = 'admin' WHERE email = 'ваш_email@example.com';
+
+Перелогиньтесь. Появится кнопка "Админ-панель".
+Данные для подключения к БД (Docker):
+
+Host: localhost
+Port: 5433 (или 5432 если локально)
+User: postgres
+Pass: postgres
+DB: med_trainer
+📡 Основные API Эндпоинты
+
+POST	/api/auth/register	Регистрация	Публичный
+POST	/api/auth/login	Авторизация	Публичный
+GET	/api/cases	Список кейсов	Публичный
+GET	/api/user/profile	Профиль + прогресс	Авторизованный
+POST	/api/user/progress	Сохранить результат кейса	Авторизованный
+PUT	/api/user/profile	Обновить профиль/аватар	Авторизованный
+POST	/api/admin/cases	Добавить кейс	Admin
+GET	/api/admin/achievements	Список ачивок	Admin
