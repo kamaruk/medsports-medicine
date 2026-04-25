@@ -4,14 +4,31 @@ const pool = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
 const bcrypt = require('bcryptjs');
 
-// Получить профиль
+// --- НАСТРОЙКА ЗАГРУЗКИ АВАТАРОВ ---
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/avatars/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, 'user-' + req.user.id + '-' + Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// --- МАРШРУТЫ ---
+
+// 1. Получить профиль (ИСПРАВЛЕНО: возвращает полные данные)
 router.get('/profile', authMiddleware, async (req, res) => {
     try {
         // 1. Данные юзера
         const userRes = await pool.query('SELECT id, name, email, role, avatar FROM users WHERE id = $1', [req.user.id]);
         if(userRes.rows.length === 0) return res.status(404).json({message: "User not found"});
         
-        // 2. Прогресс с названием кейсов 
+        // 2. Прогресс с названиями кейсов (JOIN)
         const progressRes = await pool.query(`
             SELECT uc.id, uc.case_id, uc.status, uc.accuracy, uc.completed_at, c.title 
             FROM user_cases uc
@@ -20,7 +37,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
             ORDER BY uc.completed_at DESC
         `, [req.user.id]);
         
-        // 3. Ачивки
+        // 3. Ачивки (JOIN)
         const achieveRes = await pool.query(`
             SELECT a.id, a.title, a.description, ua.earned_at 
             FROM user_achievements ua
@@ -29,8 +46,8 @@ router.get('/profile', authMiddleware, async (req, res) => {
         `, [req.user.id]);
 
         const user = userRes.rows[0];
-        user.completedCases = progressRes.rows;
-        user.achievements = achieveRes.rows;
+        user.completedCases = progressRes.rows; // Добавляем прогресс
+        user.achievements = achieveRes.rows;    // Добавляем ачивки
         
         res.json(user);
     } catch (err) {
@@ -39,7 +56,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
     }
 });
 
-// Сохранить прогресс 
+// 2. Сохранить прогресс кейса
 router.post('/progress', authMiddleware, async (req, res) => {
     const client = await pool.connect();
     try {
@@ -56,6 +73,7 @@ router.post('/progress', authMiddleware, async (req, res) => {
         `;
         await client.query(progressQuery, [userId, caseId, status, accuracy, JSON.stringify(answers)]);
 
+        // Проверка ачивок
         const countRes = await client.query("SELECT COUNT(*) FROM user_cases WHERE user_id = $1 AND status = 'success'", [userId]);
         const successCount = parseInt(countRes.rows[0].count);
 
@@ -76,34 +94,49 @@ router.post('/progress', authMiddleware, async (req, res) => {
     }
 });
 
-// Обновить данные профиля (Имя, Аватар, Пароль)
-router.put('/profile', authMiddleware, async (req, res) => {
+// 3. Обновить данные профиля (с аватаркой)
+router.put('/profile', authMiddleware, upload.single('avatar'), async (req, res) => {
     try {
-        const { name, email, avatar, password } = req.body;
+        const { name, email, password } = req.body;
         const userId = req.user.id;
 
-        let query = 'UPDATE users SET name = $1, email = $2, avatar = $3';
-        const params = [name, email, avatar];
+        let queryParts = ['name = $1', 'email = $2'];
+        let params = [name, email];
+        let paramIndex = 3;
 
-        // Если передан новый пароль, хешируем и обновляем
+        if (req.file) {
+            const avatarUrl = '/uploads/avatars/' + req.file.filename;
+            queryParts.push(`avatar = $${paramIndex}`);
+            params.push(avatarUrl);
+            paramIndex++;
+        }
+
         if (password && password.length > 0) {
             const hashedPassword = await bcrypt.hash(password, 10);
-            query += ', password = $4 WHERE id = $5 RETURNING id, name, email, role, avatar';
+            queryParts.push(`password = $${paramIndex}`);
             params.push(hashedPassword);
-            params.push(userId);
-        } else {
-            query += ' WHERE id = $4 RETURNING id, name, email, role, avatar';
-            params.push(userId);
+            paramIndex++;
         }
+
+        params.push(userId);
+
+        const query = `
+            UPDATE users 
+            SET ${queryParts.join(', ')}
+            WHERE id = $${paramIndex}
+            RETURNING id, name, email, role, avatar
+        `;
 
         const result = await pool.query(query, params);
         res.json(result.rows[0]);
 
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
+// Хелпер для выдачи ачивок
 async function checkAndAward(client, userId, achievementId, newAchievementsList) {
     const exists = await client.query('SELECT 1 FROM user_achievements WHERE user_id = $1 AND achievement_id = $2', [userId, achievementId]);
     if (exists.rows.length === 0) {
