@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # База данных PostgreSQL
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1233210z
+      POSTGRES_DB: med_trainer
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # Автоматический накат дампа
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Бэкенд Node.js
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      # Обратите внимание: DB_HOST теперь имя сервиса БД (db), а не localhost
+      DB_USER: postgres
+      DB_PASSWORD: 1233210z
+      DB_HOST: db 
+      DB_PORT: 5432
+      DB_NAME: med_trainer
+      JWT_SECRET: super_secret_key_for_diploma_123
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy # Ждем, пока БД полностью запустится
+    restart: unless-stopped
+
+  # Фронтенд Vue + Nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Сохраняем данные БД, чтобы они не удалялись при перезапуске
+volumes:
+  postgres_data:

@@ -46,8 +46,5 @@ export default {
 </script>
 
 <style>
-/* Глобальные стили, если нужны */
-body {
-  font-family: 'Roboto', sans-serif;
-}
+
 </style>
