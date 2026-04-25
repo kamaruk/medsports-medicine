@@ -27,9 +27,12 @@ router.post('/register', async (req, res) => {
 // Вход
 router.post('/login', async (req, res) => {
     try {
+        console.log('Полученные данные:', req.body); // Посмотрим, что пришло от фронта
         const { email, password } = req.body;
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
+
+        console.log('Найден юзер:', user ? 'Да' : 'Нет'); // Нашелся ли юзер в БД
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ message: 'Неверный email или пароль' });
