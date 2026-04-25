@@ -1,10 +1,10 @@
 
-```markdown
-# My Med Trainer 🏥
+markdown
+#My Med Trainer 🏥
 
 Платформа для обучения врачей и студентов медицинским кейсам. Интерактивный тренажер с системой достижений, профилем пользователя и панелью администратора.
 
-```
+
 ```
 ## 📂 Структура проекта
 my-med-trainer/
@@ -40,7 +40,7 @@ my-med-trainer/
 
 ```
 ---
-## 🚀 Запуск проекта
+##🚀Запуск проекта
 
 ### Способ 1: Локальный запуск (Разработка)
 
@@ -189,4 +189,3 @@ INSERT INTO achievements (id, title, description) VALUES
 | POST | `/api/admin/cases` | Добавить кейс | Admin |
 | GET | `/api/admin/achievements`| Список ачивок | Admin |
 ```
-
