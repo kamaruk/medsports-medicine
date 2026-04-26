@@ -91,8 +91,7 @@ npm run dev
 ```bash
 docker-compose up --build
 ```
-Docker сам создаст контейнеры, применит скрипт `init.db` и запустит сервер.
-Фронтенд запустите отдельно командой `npm run dev`.
+
 
 ---
 
