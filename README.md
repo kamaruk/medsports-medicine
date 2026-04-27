@@ -16,7 +16,6 @@ my-med-trainer/
 ├── server/                # Бэкенд (Node.js + Express)
 │   ├── middleware/        # Проверки авторизации
 │   ├── routes/            # API маршруты
-│   ├── uploads/           # Загруженные файлы (аватарки)
 │   ├── .env               # Переменные окружения (создать вручную)
 │   ├── db.js              # Подключение к PostgreSQL
 │   ├── Dockerfile         # Инструкция для Docker
