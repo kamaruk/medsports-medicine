@@ -17,7 +17,7 @@
             required
           />
           
-          <!-- Загрузка аватара -->
+          <!-- Блок загрузки аватара -->
           <div class="mb-4">
              <v-btn color="secondary" variant="outlined" @click="$refs.fileInput.click()">
                <v-icon start>mdi-camera</v-icon>
@@ -68,8 +68,8 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const avatar = ref('') // Тут будет Base64 строка
-const avatarPreview = ref('') // Для превью
+const selectedFile = ref(null) // Для хранения объекта File
+const avatarPreview = ref('') // Для отображения картинки
 
 const form = ref(null)
 const formValid = ref(true)
@@ -88,25 +88,32 @@ watch(dialog, (open) => {
     email.value = user.value.email || ''
     password.value = ''
     confirmPassword.value = ''
-    avatar.value = user.value.avatar || ''
-    avatarPreview.value = user.value.avatar || ''
+    selectedFile.value = null
+    
+    // Установка превью аватара
+    if (user.value.avatar) {
+       if (user.value.avatar.startsWith('http') || user.value.avatar.startsWith('data:')) {
+           avatarPreview.value = user.value.avatar;
+       } else {
+           avatarPreview.value = 'http://localhost:3000' + user.value.avatar;
+       }
+    } else {
+       avatarPreview.value = '';
+    }
   }
 })
 
-// Обработка файла
+// Обработка выбора файла
 const handleFileUpload = (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > 500 * 1024) { // 500 КБ
-    alert('Фото слишком большое. Пожалуйста, выберите файл меньше 500КБ.');
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = () => {
-    avatar.value = reader.result; // Base64 строка
-    avatarPreview.value = reader.result;
-  };
-  reader.readAsDataURL(file);
+
+  console.log("Выбран файл:", file); // ОТЛАДКА
+
+  selectedFile.value = file; // Сохраняем сам файл
+  
+  // Создаем ссылку для предпросмотра
+  avatarPreview.value = URL.createObjectURL(file);
 }
 
 const save = async () => {
@@ -114,18 +121,23 @@ const save = async () => {
 
   loading.value = true;
   
-  const payload = {
-    name: name.value,
-    email: email.value,
-    avatar: avatar.value
-  };
-
+  // Создаем объект FormData
+  const formData = new FormData();
+  formData.append('name', name.value);
+  formData.append('email', email.value);
   
   if (password.value) {
-    payload.password = password.value;
+    formData.append('password', password.value);
   }
 
-  const result = await store.dispatch('user/updateProfile', payload);
+  // Если выбран новый файл, добавляем его
+  if (selectedFile.value) {
+    formData.append('avatar', selectedFile.value);
+    console.log("FormData: файл добавлен", selectedFile.value.name); // ОТЛАДКА
+  }
+
+  // Отправляем через store
+  const result = await store.dispatch('user/updateProfile', formData);
 
   loading.value = false;
 

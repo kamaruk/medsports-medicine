@@ -97,6 +97,10 @@ router.post('/progress', authMiddleware, async (req, res) => {
 // 3. Обновить данные профиля (с аватаркой)
 router.put('/profile', authMiddleware, upload.single('avatar'), async (req, res) => {
     try {
+        console.log("PUT /profile request received");
+
+        console.log("File received:", req.file); 
+        console.log("Body data:", req.body);
         const { name, email, password } = req.body;
         const userId = req.user.id;
 

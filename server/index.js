@@ -1,8 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan'); 
-const pool = require('./db'); 
+const morgan = require('morgan');
+const path = require('path'); 
+const pool = require('./db');
 
 const app = express();
 
@@ -11,7 +12,10 @@ app.use(morgan('dev'));
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); 
+app.use(express.json({ limit: '50mb' }));
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Проверка подключения к БД при старте
 pool.connect()

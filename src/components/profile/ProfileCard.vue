@@ -42,13 +42,24 @@
   const user = computed(() => store.state.user.userData || {})
 
   const safeAvatar = computed(() => {
-    if (user.value.avatar && user.value.avatar.trim() !== '') {
-      return user.value.avatar
-    } else {
-      return defaultAvatar
+    const avatarPath = user.value.avatar;
+    
+    // Если аватарки нет - ставим заглушку
+    if (!avatarPath || avatarPath.trim() === '') {
+      return defaultAvatar;
     }
+    
+    // Если путь уже полный (начинается с http) - возвращаем как есть
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+    
+    
+    return 'http://localhost:3000' + avatarPath;
   })
 </script>
+
+
 
 <style scoped>
   .profile-card {
