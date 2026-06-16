@@ -14,7 +14,7 @@
     </v-img>
     <v-card-text>
       <h3 class="text-subtitle-1 font-weight-medium">{{ caseData.title }}</h3>
-      <p class="text-caption mt-1">{{ caseData.description }}</p>
+      <p class="text-caption mt-1 description-text">{{ caseData.description }}</p>
     </v-card-text>
     <v-card-actions class="justify-end">
       <v-btn variant="text" class="text-primary" :to="`/cases/${caseData.id}`">
@@ -74,4 +74,13 @@
   flex-direction: column;
   justify-content: flex-end;
 }
+
+.description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Ограничиваем до 2 строк. Если хотите 3 строки - поменяйте цифру */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Добавляет многоточие в конце */
+}
+
 </style>

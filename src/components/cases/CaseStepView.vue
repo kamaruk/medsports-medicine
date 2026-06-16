@@ -30,6 +30,8 @@
 
       <!-- Контент шага -->
       <v-card v-if="step" class="pa-6 rounded-lg elevation-5">
+        
+        <!-- ВОПРОС -->
         <template v-if="step.type === 'question'">
           <h2 class="text-h6 font-weight-bold mb-6">{{ step.question }}</h2>
 
@@ -41,7 +43,7 @@
             rounded
             size="large"
             class="mb-3 text-body-1 option-btn" 
-            :color="selected === idx ? (option.correct ? 'success' : 'error') : 'primary'"
+            :color="selected === idx ? (isBranching ? 'secondary' : ((option.correct || option.isOptimal) ? 'success' : 'error')) : 'primary'"
             :disabled="selected !== null || timeOut"
             @click="selectOption(idx)"
           >
@@ -50,8 +52,8 @@
 
           <!-- Показываем алерт если выбрано или время вышло -->
           <v-alert
-            v-if="selected !== null"
-            :type="step.options[selected]?.correct ? 'success' : 'error'"
+            v-if="selected !== null && !isBranching"
+            :type="(step.options[selected]?.correct || step.options[selected]?.isOptimal) ? 'success' : 'error'"
             class="mt-4"
             variant="tonal"
           >
@@ -67,22 +69,59 @@
             Время вышло! Кейс не пройден. Попробуйте пройти его снова.
           </v-alert>
 
-          <!-- Кнопка для возврата -->
+          <!-- Кнопка для возврата при провале -->
           <div v-if="caseFailed" class="text-right mt-6">
             <v-btn color="primary" to="/cases" rounded size="large">
               Вернуться к кейсам
             </v-btn>
           </div>
-
-
         </template>
 
+        <!-- ИНФОРМАЦИЯ -->
         <template v-else-if="step.type === 'info'">
           <v-icon color="primary" size="40">mdi-information-outline</v-icon>
           <p class="text-body-1 mt-3">{{ step.content }}</p>
         </template>
 
-        <div class="text-right mt-6" v-if="!caseFailed">
+        <!-- РЕЗУЛЬТАТ (Финал ветвящегося кейса) -->
+        <template v-else-if="step.type === 'result'">
+          <div class="text-center">
+            <v-icon :color="step.status === 'success' ? 'success' : 'error'" size="64">
+              {{ step.status === 'success' ? 'mdi-check-circle-outline' : 'mdi-alert-circle-outline' }}
+            </v-icon>
+            <h2 class="mt-4 font-weight-bold">Кейс завершён!</h2>
+            <p class="text-body-1 mt-4">{{ step.content }}</p>
+            <p class="text-h5 font-weight-medium mt-4" :class="step.status === 'success' ? 'text-success' : 'text-error'">
+              Итоговая точность: {{ step.accuracy }}%
+            </p>
+          </div>
+
+          <!-- История ответов для ветвящегося кейса -->
+          <div class="mt-6 text-left answers-scroll-container">
+            <h3 class="text-h6 font-weight-bold mb-3">Ваши ответы:</h3>
+            <v-list dense class="answers-list">
+              <v-list-item
+                v-for="(answer, i) in userAnswers"
+                :key="i"
+              >
+                <v-list-item-title>{{ answer.question }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  Вы выбрали: {{ answer.selectedOption }} — 
+                  <strong>{{ answer.isCorrect ? '✅ Оптимально' : '❌ Не оптимально' }}</strong>
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </div>
+
+          <div class="text-center mt-6">
+            <v-btn color="primary" to="/cases" rounded size="large">
+              Вернуться к кейсам
+            </v-btn>
+          </div>
+        </template>
+
+        <!-- Кнопка "Следующий шаг" (скрывается, если это финальный результат) -->
+        <div class="text-right mt-6" v-if="!caseFailed && step.type !== 'result'">
           <v-btn
             color="primary"
             size="large"
@@ -97,15 +136,14 @@
 
       </v-card>
 
-      <!-- Завершение кейса -->
+      <!-- Завершение ЛИНЕЙНОГО кейса (когда шаги закончились) -->
       <div v-else class="text-center py-10">
         <v-icon color="success" size="64">mdi-check-circle-outline</v-icon>
         <h2 class="mt-4 font-weight-bold">Кейс завершён!</h2>
         <p class="text-body-1 mb-2">Правильных ответов: {{ score }} из {{ totalQuestions }}</p>
         <p class="text-body-1 font-weight-medium mb-4">Точность: {{ accuracy }}%</p>
         
-        
-       <div class="mt-6 text-left answers-scroll-container">
+        <div class="mt-6 text-left answers-scroll-container">
           <h3 class="text-h6 font-weight-bold mb-3">Ваши ответы:</h3>
           <v-list dense class="answers-list">
             <v-list-item
@@ -136,7 +174,7 @@
   import { ref, computed, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
-  import api from '@/api' // Импортируем api для запросов
+  import api from '@/api' 
 
   const store = useStore()
   const route = useRoute()
@@ -148,9 +186,16 @@
     store.getters['cases/allCases'].find(c => c.id === caseId)
   )
 
-  const currentStepIndex = ref(0)
+  // --- ПЕРЕМЕННЫЕ ДЛЯ НАВИГАЦИИ ---
+  const currentStepIndex = ref(0) // Для линейных кейсов
+  const currentStepId = ref(null)
+  const branchingStepCounter = ref(1) 
+  const lastSelectedOption = ref(null) // Запоминаем выбор для перехода
+  const finalResultSaved = ref(false) // Защита от двойного сохранения
+  const finalAccuracy = ref(null) // Для хранения оценки из финального узла
+
   const selected = ref(null)
-  const score = ref(0)
+  const score = ref(0) 
   const timer = ref(null)
   const timeOut = ref(false)
   const caseFailed = ref(false)
@@ -158,47 +203,132 @@
 
   const userAnswers = ref([])
 
-  const step = computed(() => caseData.value?.steps?.[currentStepIndex.value] || null)
-  const totalSteps = computed(() => caseData.value?.steps?.length || 0)
-  const currentStepDisplay = computed(() => {
-    return Math.min(currentStepIndex.value + 1, totalSteps.value)
+  // --- ИЗВЛЕЧЕНИЕ МАССИВА ШАГОВ (РЕШЕНИЕ ОШИББКИ findIndex) ---
+  // Умный геттер, который всегда возвращает массив шагов, независимо от формата кейса
+  const stepsArray = computed(() => {
+    if (!caseData.value) return []
+    const stepsData = caseData.value.steps
+    
+    // Если старый формат (просто массив)
+    if (Array.isArray(stepsData)) return stepsData
+    
+    // Если новый формат (объект с оберткой)
+    if (stepsData?.steps && Array.isArray(stepsData.steps)) return stepsData.steps
+    
+    return []
   })
 
-  const totalQuestions = computed(() =>
-    caseData.value?.steps?.filter(s => s.type === 'question').length || 0
-  )
-  const accuracy = computed(() =>
-    totalQuestions.value > 0 ? Math.round((score.value / totalQuestions.value) * 100) : 0
-  )
+  // --- ОПРЕДЕЛЕНИЕ ТИПА КЕЙСА ---
+  const isBranching = computed(() => {
+    const stepsData = caseData.value?.steps
+    if (!stepsData) return false
+    if (Array.isArray(stepsData)) return false // Старый линейный формат
+    return stepsData.caseType === 'branching' // Новый формат
+  })
 
+  // --- УМНЫЙ ВЫЧИСЛИТЕЛЬ ТЕКУЩЕГО ШАГА ---
+  const step = computed(() => {
+    if (!stepsArray.value.length) return null
+
+    if (isBranching.value) {
+      if (!currentStepId.value) return stepsArray.value[0]
+      return stepsArray.value.find(s => s.id === currentStepId.value) || null
+    } else {
+      return stepsArray.value[currentStepIndex.value] || null
+    }
+  })
+
+  const totalSteps = computed(() => stepsArray.value.length || 0)
+  
+  const currentStepDisplay = computed(() => {
+  if (isBranching.value) return branchingStepCounter.value; // Показываем реальный номер шага (1, 2, 3)
+  return Math.min(currentStepIndex.value + 1, totalSteps.value)
+})
+
+  const totalQuestions = computed(() =>
+    stepsArray.value.filter(s => s.type === 'question').length || 0
+  )
+  
+  const accuracy = computed(() => {
+    if (finalAccuracy.value !== null) return finalAccuracy.value
+    if (totalQuestions.value > 0) return Math.round((score.value / totalQuestions.value) * 100)
+    return 0
+  })
+
+  // --- ОБРАБОТКА ВЫБОРА ОТВЕТА ---
+    // --- ОБРАБОТКА ВЫБОРА ОТВЕТА ---
   function selectOption(index) {
     if (selected.value === null && !timeOut.value) {
       selected.value = index
-      const isCorrect = step.value.options[index].correct
-      if (isCorrect) score.value++
+      clearInterval(timer.value)
+      
+      const chosenOption = step.value.options[index]
+      lastSelectedOption.value = chosenOption 
+
+      const isCorrect = isBranching.value ? !!chosenOption.isOptimal : chosenOption.correct
+
+      // Баллы начисляем только в линейных кейсах
+      if (!isBranching.value && isCorrect) score.value++
+
       userAnswers.value.push({
         stepId: step.value.id,
         question: step.value.question,
-        selectedOption: step.value.options[index].text,
+        selectedOption: chosenOption.text,
         isCorrect
       })
-      clearInterval(timer.value)
+
+      // Если кейс ветвящийся — делаем мгновенный переход без показа алертов
+      if (isBranching.value) {
+        setTimeout(() => {
+          nextStep()
+        }, 300) // Задержка 0.3 сек, чтобы пользователь увидел, что кнопка нажалась
+      }
     }
   }
 
-  function nextStep() {
-    if (caseFailed.value) return 
-    selected.value = null
-    timeOut.value = false
-    currentStepIndex.value++
-    if (currentStepIndex.value < totalSteps.value) {
-      resetTimer()
+  // --- ПЕРЕХОД К СЛЕДУЮЩЕМУ ШАГУ ---
+function nextStep() {
+  if (caseFailed.value) return 
+  
+  if (isBranching.value) {
+    let nextId = null;
+
+    // 1. Приоритет: если мы выбрали ответ, идем по nextStepId из ответа
+    if (lastSelectedOption.value?.nextStepId) {
+      nextId = lastSelectedOption.value.nextStepId;
+    } 
+    // 2. Если это инфо-шаг, берем nextStepId из самого шага (как в вашем JSON)
+    else if (step.value?.nextStepId) {
+      nextId = step.value.nextStepId;
+    }
+
+    // Если нашли куда идти — идем
+    if (nextId) {
+      currentStepId.value = nextId;
+      branchingStepCounter.value++; // Увеличиваем счетчик реальных шагов
     } else {
-      clearInterval(timer.value)
+      // Если нигде нет указателя куда идти — значит это конец кейса
+      currentStepId.value = null;
     }
+  } else {
+    // Старая логика для линейного кейса
+    currentStepIndex.value++
   }
 
-  // Функция отправки результата на сервер
+  // Сброс состояния интерфейса
+  selected.value = null
+  timeOut.value = false
+  lastSelectedOption.value = null
+
+  // Перезапуск таймера
+  if (step.value && step.value.type !== 'result') {
+    resetTimer()
+  } else {
+    clearInterval(timer.value)
+  }
+}
+
+  // --- ОТПРАВКА РЕЗУЛЬТАТА НА СЕРВЕР ---
   async function saveResultToServer(status, accuracyScore, answers) {
     try {
       await api.post('/user/progress', {
@@ -207,13 +337,13 @@
         accuracy: accuracyScore,
         answers: answers
       });
-     
       store.dispatch('user/fetchProfile');
     } catch (err) {
       console.error("Ошибка сохранения прогресса", err);
     }
   }
 
+  // --- ТАЙМЕР ---
   function startTimer() {
     remainingTime.value = 10
     timer.value = setInterval(() => {
@@ -223,8 +353,6 @@
         if (selected.value === null) {
           timeOut.value = true
           caseFailed.value = true
-          
-          
           saveResultToServer('failed', 0, userAnswers.value);
         }
       }
@@ -240,21 +368,39 @@
     }
   }
 
+  // --- СЛЕЖЕНИЕ ЗА ИЗМЕНЕНИЯМИ ---
   onMounted(() => {
     if (isAuthenticated.value) {
       resetTimer()
     }
   })
+  
   onBeforeUnmount(() => clearInterval(timer.value))
-  watch(step, resetTimer)
+  
+  watch(step, (newStep) => {
+    if (newStep && newStep.type !== 'result') {
+      resetTimer()
+    }
+  })
 
   watchEffect(() => {
-    
-    if (!step.value && caseData.value && isAuthenticated.value) {
-      const isSuccess = accuracy.value >= 80;
-      
-      
-      saveResultToServer(isSuccess ? 'success' : 'failed', accuracy.value, userAnswers.value);
+    if (!caseData.value || !isAuthenticated.value) return
+
+    // 1. Обработка окончания ЛИНЕЙНОГО кейса
+    if (!isBranching.value && currentStepIndex.value >= stepsArray.value.length && currentStepIndex.value > 0) {
+      if (!finalResultSaved.value) {
+        finalResultSaved.value = true
+        const isSuccess = accuracy.value >= 80;
+        saveResultToServer(isSuccess ? 'success' : 'failed', accuracy.value, userAnswers.value);
+      }
+    }
+
+    // 2. Обработка ФИНАЛЬНОГО УЗЛА в ВЕТВЯЩЕМСЯ кейсе
+    if (isBranching.value && step.value?.type === 'result' && !finalResultSaved.value) {
+      finalResultSaved.value = true 
+      clearInterval(timer.value) 
+      finalAccuracy.value = step.value.accuracy || 0
+      saveResultToServer(step.value.status, step.value.accuracy, userAnswers.value)
     }
   })
 </script>

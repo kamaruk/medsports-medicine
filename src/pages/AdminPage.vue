@@ -67,6 +67,7 @@
                 <th class="text-left">Название</th>
                 <th class="text-left">Категория</th>
                 <th class="text-left" style="width: 150px;">Сложность</th>
+                <th class="text-left" style="width: 120px;">Тип кейса</th>
                 <th class="text-right" style="width: 120px;">Действия</th>
               </tr>
             </thead>
@@ -79,6 +80,11 @@
                 </td>
                 <td>
                   <v-rating :model-value="item.difficulty" readonly density="compact" color="red" half-increments></v-rating>
+                </td>
+                <td>
+                  <v-chip size="small" :color="getCaseTypeColor(getCaseType(item.steps))" variant="tonal">
+                    {{ getCaseTypeLabel(getCaseType(item.steps)) }}
+                  </v-chip>
                 </td>
                 <td class="text-right">
                   <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="openCaseDialog(item)"></v-btn>
@@ -159,7 +165,21 @@
                 ></v-combobox>
               </v-col>
 
+              <!-- ПОЛЕ ТИПА КЕЙСА -->
               <v-col cols="12" md="6">
+                <v-select 
+                  v-model="caseData.caseType" 
+                  :items="caseTypeOptions"
+                  item-title="title"
+                  item-value="value"
+                  label="Тип кейса *"
+                  hint="Выберите формат прохождения"
+                  persistent-hint
+                  :rules="[v => !!v || 'Выберите тип']"
+                ></v-select>
+              </v-col>
+
+              <v-col cols="12">
                 <v-text-field 
                   v-model="caseData.image" 
                   label="Ссылка на изображение"
@@ -178,7 +198,6 @@
               <v-col cols="12">
                 <div class="d-flex align-center mb-2">
                     <h3 class="mr-2">Структура шагов (JSON) *</h3>
-                    <!-- КНОПКА ВОПРОС -->
                     <v-btn 
                         icon 
                         color="info" 
@@ -196,7 +215,7 @@
                   rows="10" 
                   label="JSON шагов"
                   :rules="[v => !!v || 'Заполните шаги', validateJson]"
-                  hint="Заполните согласно шаблону"
+                  hint="Заполните согласно шаблону (шаблон зависит от выбранного типа кейса)"
                   persistent-hint
                 />
               </v-col>
@@ -224,25 +243,43 @@
             <v-card-text class="pa-4 text-body-1">
                 <p class="mb-4">Поле <strong>steps</strong> должно содержать массив объектов. Каждый объект — это шаг кейса.</p>
                 
-                <h3 class="mb-2">1. Шаг с вопросом (type: question)</h3>
+                <h3 class="mb-2">1. Линейный кейс (Стандартный)</h3>
+                <p class="mb-2">Переход идет строго по порядку. Оценка ставится за правильные ответы.</p>
                 <pre class="bg-grey-lighten-3 pa-3 rounded-lg overflow-x-auto" style="font-size: 0.8rem;">{
-                    "id": 1,
-                    "type": "question",
-                    "question": "Текст вашего вопроса?",
-                    "options": [
-                        { "text": "Вариант ответа 1 (Правильный)", "correct": true },
-                        { "text": "Вариант ответа 2 (Неверный)", "correct": false }
-                    ],
-                    "explanation": "Объяснение, почему правильный ответ верный."
-                    }</pre>
+    "id": 1,
+    "type": "question",
+    "question": "Текст вопроса?",
+    "options": [
+        { "text": "Правильный ответ", "correct": true },
+        { "text": "Неверный ответ", "correct": false }
+    ],
+    "explanation": "Объяснение."
+}</pre>
 
-                                    <h3 class="mb-2 mt-4">2. Информационный шаг (type: info)</h3>
-                                    <pre class="bg-grey-lighten-3 pa-3 rounded-lg overflow-x-auto" style="font-size: 0.8rem;">{
-                    "id": 2,
-                    "type": "info",
-                    "content": "Текст информации для чтения пациентом."
-                    }
-                </pre>
+                <h3 class="mb-2 mt-4">2. Ветвящийся кейс (Дерево решений)</h3>
+                <p class="mb-2">Переход зависит от выбора. У каждого варианта есть <strong>nextStepId</strong>. Вместо <strong>correct</strong> используется <strong>isOptimal</strong> для оценки. В конце добавляется шаг <strong>type: "result"</strong>.</p>
+                <pre class="bg-grey-lighten-3 pa-3 rounded-lg overflow-x-auto" style="font-size: 0.8rem;">{
+    "id": "step_1",
+    "type": "question",
+    "question": "Ваши действия?",
+    "options": [
+        { "text": "Действие А (хорошее)", "nextStepId": "step_2_good", "isOptimal": true },
+        { "text": "Действие Б (плохое)", "nextStepId": "step_2_bad", "isOptimal": false }
+    ],
+    "explanation": "Объяснение выбора."
+},
+{
+    "id": "step_2_good",
+    "type": "info",
+    "content": "Состояние улучшилось..."
+},
+{
+    "id": "end_success",
+    "type": "result",
+    "content": "Пациент спасен!",
+    "status": "success",
+    "accuracy": 100
+}</pre>
 
                 <v-alert type="warning" class="mt-4" density="compact">
                     Внимательно следите за запятыми между объектами и квадратными скобками в начале и конце массива.
@@ -276,7 +313,7 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watch } from 'vue';
     import api from '@/api';
     import { useStore } from 'vuex';
     import { useRouter } from 'vue-router';
@@ -284,7 +321,6 @@
     const store = useStore();
     const router = useRouter();
 
-    
     const tab = ref('cases');
     const cases = ref([]);
     const achievements = ref([]);
@@ -292,187 +328,271 @@
     const filterCategory = ref(null); 
     const saving = ref(false);
 
-    
     const caseDialog = ref(false);
     const achievementDialog = ref(false);
     const helpDialog = ref(false); 
 
-    
     const caseForm = ref(null);
     const editingCase = ref(null);
+    
+    const caseTypeOptions = [
+      { title: 'Линейный (с правильными/неправильными ответами)', value: 'linear' },
+      { title: 'Ветвящийся (дерево решений, исходы)', value: 'branching' }
+    ];
+
+    const defaultLinearTemplate = `[
+  {
+    "id": 1,
+    "type": "question",
+    "question": "Текст вопроса?",
+    "options": [
+      { "text": "Правильный ответ", "correct": true },
+      { "text": "Неверный ответ", "correct": false }
+    ],
+    "explanation": "Объяснение."
+  }
+]`;
+
+    const defaultBranchingTemplate = `[
+  {
+    "id": "step_1",
+    "type": "question",
+    "question": "Ваши действия?",
+    "options": [
+      { "text": "Действие А (хорошее)", "nextStepId": "step_2_good", "isOptimal": true },
+      { "text": "Действие Б (плохое)", "nextStepId": "step_2_bad", "isOptimal": false }
+    ],
+    "explanation": "Объяснение выбора."
+  },
+  {
+    "id": "step_2_good",
+    "type": "info",
+    "content": "Состояние улучшилось..."
+  },
+  {
+    "id": "step_2_bad",
+    "type": "info",
+    "content": "Состояние ухудшилось..."
+  },
+  {
+    "id": "end_success",
+    "type": "result",
+    "content": "Пациент спасен!",
+    "status": "success",
+    "accuracy": 100
+  }
+]`;
+
     const caseData = ref({
-    title: '',
-    category: '',
-    description: '',
-    image: '',
-    difficulty: 1,
-    stepsJson: '[]'
+      title: '',
+      category: '',
+      description: '',
+      image: '',
+      difficulty: 1,
+      caseType: 'linear',
+      stepsJson: defaultLinearTemplate
     });
 
     const newAchievement = ref({
-    id: '', title: '', description: ''
+      id: '', title: '', description: ''
     });
 
-    // Пример шаблона по умолчанию для нового кейса
-    const defaultStepsTemplate = `[]`;
+    // Автоматическая смена шаблона JSON при смене типа кейса (только для новых кейсов)
+    watch(() => caseData.value.caseType, (newType) => {
+      if (!editingCase.value) {
+        if (newType === 'branching') {
+          caseData.value.stepsJson = defaultBranchingTemplate;
+        } else {
+          caseData.value.stepsJson = defaultLinearTemplate;
+        }
+      }
+    });
 
-    // Проверка прав доступа при загрузке
     onMounted(async () => {
-    const user = store.state.user.userData;
-    if (!user || user.role !== 'admin') {
+      const user = store.state.user.userData;
+      if (!user || user.role !== 'admin') {
         setTimeout(() => {
-            const u = store.state.user.userData;
-            if (u?.role !== 'admin') {
-                alert('Доступ запрещен');
-                router.push('/');
-            }
+          const u = store.state.user.userData;
+          if (u?.role !== 'admin') {
+            alert('Доступ запрещен');
+            router.push('/');
+          }
         }, 500);
-    }
-    await loadCases();
-    await loadAchievements();
+      }
+      await loadCases();
+      await loadAchievements();
     });
 
-    // Загрузка данных
     const loadCases = async () => {
-    try {
+      try {
         const res = await api.get('/cases');
         cases.value = res.data;
-    } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); }
     };
 
     const loadAchievements = async () => {
-    try {
+      try {
         const res = await api.get('/admin/achievements');
         achievements.value = res.data;
-    } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); }
     };
 
-    
     const availableCategories = computed(() => {
-        const map = {};
-        cases.value.forEach(c => {
-            if(c.category) map[c.category] = (map[c.category] || 0) + 1;
-        });
-        return Object.entries(map).map(([name, count]) => ({ name, count }));
+      const map = {};
+      cases.value.forEach(c => {
+        if(c.category) map[c.category] = (map[c.category] || 0) + 1;
+      });
+      return Object.entries(map).map(([name, count]) => ({ name, count }));
     });
 
-    
     const categoryNames = computed(() => {
-        const categories = cases.value.map(c => c.category).filter(c => c);
-        return [...new Set(categories)];
+      const categories = cases.value.map(c => c.category).filter(c => c);
+      return [...new Set(categories)];
     });
 
-    
     const filteredCases = computed(() => {
-    return cases.value.filter(c => {
+      return cases.value.filter(c => {
         const matchCategory = !filterCategory.value || c.category === filterCategory.value;
         const searchTerm = searchCases.value ? searchCases.value.toLowerCase() : '';
         const matchSearch = !searchTerm || 
                             c.id.toString().includes(searchTerm) || 
                             c.title.toLowerCase().includes(searchTerm);
         return matchCategory && matchSearch;
-    });
+      });
     });
 
-    
+    // Определение типа кейса из загруженного JSON для таблицы
+    function getCaseType(stepsData) {
+      if (!stepsData) return 'linear';
+      if (Array.isArray(stepsData)) return 'linear';
+      if (stepsData.caseType === 'branching') return 'branching';
+      return 'linear';
+    }
+
+    function getCaseTypeLabel(type) {
+      return type === 'branching' ? 'Ветвящийся' : 'Линейный';
+    }
+
+    function getCaseTypeColor(type) {
+      return type === 'branching' ? 'purple' : 'teal';
+    }
 
     const openCaseDialog = (item = null) => {
-    editingCase.value = item;
-    if (item) {
-        
+      editingCase.value = item;
+      if (item) {
+        let stepsObj = typeof item.steps === 'string' ? JSON.parse(item.steps) : item.steps;
+        let caseType = 'linear';
+        let stepsArr = stepsObj;
+
+        // Если данные - объект с оберткой { caseType: 'branching', steps: [...] }
+        if (!Array.isArray(stepsObj) && stepsObj.steps) {
+          caseType = stepsObj.caseType || 'branching';
+          stepsArr = stepsObj.steps;
+        }
+
         caseData.value = { 
-        ...item, 
-        stepsJson: typeof item.steps === 'string' ? item.steps : JSON.stringify(item.steps, null, 2)
+          ...item, 
+          caseType: caseType,
+          stepsJson: JSON.stringify(stepsArr, null, 2)
         };
-    } else {
-        
+      } else {
         caseData.value = {
-        title: '',
-        category: '',
-        description: '',
-        image: '',
-        difficulty: 1,
-        stepsJson: defaultStepsTemplate
+          title: '',
+          category: '',
+          description: '',
+          image: '',
+          difficulty: 1,
+          caseType: 'linear',
+          stepsJson: defaultLinearTemplate
         };
-    }
-    caseDialog.value = true;
+      }
+      caseDialog.value = true;
     };
 
-    
     const validateJson = (v) => {
-    try {
+      try {
         JSON.parse(v);
         return true;
-    } catch (e) {
+      } catch (e) {
         return 'Неверный формат JSON';
-    }
+      }
     };
 
     const saveCase = async () => {
-    
-    const { valid } = await caseForm.value.validate();
-    if (!valid) return;
+      const { valid } = await caseForm.value.validate();
+      if (!valid) return;
 
-    saving.value = true;
-    try {
+      saving.value = true;
+      try {
         const payload = { ...caseData.value };
-        payload.steps = JSON.parse(payload.stepsJson); // Парсим, так как валидация уже прошла
+        const parsedSteps = JSON.parse(payload.stepsJson); // Парсим массив шагов
+
+        // Формируем итоговую структуру для отправки на бэкенд
+        if (payload.caseType === 'branching') {
+          // Оборачиваем массив в объект с типом
+          payload.steps = { caseType: 'branching', steps: parsedSteps };
+        } else {
+          // Для линейного оставляем просто массив
+          payload.steps = parsedSteps;
+        }
+
+        // Удаляем лишние поля, которых нет в БД
+        delete payload.stepsJson;
+        delete payload.caseType; 
 
         if (editingCase.value) {
-        await api.put(`/admin/cases/${editingCase.value.id}`, payload);
+          await api.put(`/admin/cases/${editingCase.value.id}`, payload);
         } else {
-        await api.post('/admin/cases', payload);
+          await api.post('/admin/cases', payload);
         }
         
         await loadCases();
         caseDialog.value = false;
-    } catch (err) {
+      } catch (err) {
         alert('Ошибка сохранения: ' + (err.response?.data?.error || err.message));
-    } finally {
+      } finally {
         saving.value = false;
-    }
+      }
     };
 
     const deleteCase = async (id) => {
-    if (confirm('Удалить этот кейс? Это действие необратимо.')) {
+      if (confirm('Удалить этот кейс? Это действие необратимо.')) {
         try {
-        await api.delete(`/admin/cases/${id}`);
-        await loadCases();
+          await api.delete(`/admin/cases/${id}`);
+          await loadCases();
         } catch (e) { alert('Ошибка удаления'); }
-    }
+      }
     };
 
-    
-
     const openAchievementDialog = () => {
-    newAchievement.value = { id: '', title: '', description: '' };
-    achievementDialog.value = true;
+      newAchievement.value = { id: '', title: '', description: '' };
+      achievementDialog.value = true;
     };
 
     const saveAchievement = async () => {
-    try {
+      try {
         await api.post('/admin/achievements', newAchievement.value);
         await loadAchievements();
         achievementDialog.value = false;
-    } catch (err) {
+      } catch (err) {
         alert('Ошибка создания ачивки');
-    }
+      }
     };
 
     const deleteAchievement = async (id) => {
-    if (confirm('Удалить достижение?')) {
+      if (confirm('Удалить достижение?')) {
         try {
-        await api.delete(`/admin/achievements/${id}`);
-        await loadAchievements();
+          await api.delete(`/admin/achievements/${id}`);
+          await loadAchievements();
         } catch (e) { alert('Ошибка удаления'); }
-    }
+      }
     };
 </script>
 
 <style scoped>
     .admin-panel {
-    max-width: 1400px;
-    margin: 0 auto;
+      max-width: 1400px;
+      margin: 0 auto;
     }
     .bg-primary { background-color: #1976d2; color: white; }
     .bg-secondary { background-color: #9c27b0; color: white; }
